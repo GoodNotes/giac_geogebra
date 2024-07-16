@@ -1193,15 +1193,18 @@ namespace giac {
           gen a,b;
           reim(v[j],a,b,context0);
           if (is_greater(a,a0,context0) && is_greater(a1,a,context0) && is_greater(b,b0,context0) && is_greater(b1,b,context0)){
-            if (is_strictly_positive(-vradius[j],context0))
+            if (is_strictly_positive(-vradius[j],context0)) {
+              COUT << "positive " << v[j];
               res.push_back(makevecteur(v[j],1));
-            else {
+            } else {
               gen ad,au;
+              COUT << "before round " << a << "," << b;
               round1downup(a,vradius[j],ad,au);
               a=eval(change_subtype(makevecteur(ad,au),_INTERVAL__VECT),1,context0);
               gen bd,bu;
               round1downup(b,vradius[j],bd,bu);
               b=eval(change_subtype(makevecteur(bd,bu),_INTERVAL__VECT),1,context0);
+              COUT << "after round " << a << "," << b;
               res.push_back(makevecteur(gen(a,b),1));
             }
           }
