@@ -135,6 +135,7 @@ def iphonesimulatorSdk = exec_("xcrun", "--sdk", "iphonesimulator", "--show-sdk-
 def iphoneosPlatform = exec_("xcrun", "--sdk", "iphoneos", "--show-sdk-platform-path")
 def minIosVersion = '9.0'
 
+
 def simulatorPostfix = "-simulator"
 def catalystPostfix = "-macabi"
 def iosTarget(arch, minIosVersion, postfix = "") {
@@ -180,6 +181,11 @@ def giacIosDefines(cppCompiler) {
     cppCompiler.define 'OSX_10_9_CXX'
     cppCompiler.define 'HAVE_CONFIG_H'
     cppCompiler.define '_IOS_FIX_'
+    cppCompiler.args '-Os' // standard optimization (default)
+    cppCompiler.args '-I.'
+    cppCompiler.args '-s'
+    cppCompiler.args '-DNDEBUG'
+    cppCompiler.args '-DTIMEOUT'
 }
 
 def giacSpecificSettings(cppCompiler, linker, targetPlatform) {
@@ -234,6 +240,7 @@ def giacSpecificSettings(cppCompiler, linker, targetPlatform) {
 
 
         cppCompiler.define 'HAVE_UNISTD_H'
+        cppCompiler.define 'SIZEOF_VOID_P', '8'
 
         cppCompiler.args '-I', file('src/jni/jdkHeaders/linux').toString()
         cppCompiler.args '-fno-strict-aliasing' // maybe not needed
@@ -279,6 +286,31 @@ def giacSpecificSettings(cppCompiler, linker, targetPlatform) {
     }
 }
 
+def tommathiOSSetting(cppCompiler) {
+    cppCompiler.args '-Os' // standard optimization (default)
+    cppCompiler.args '-I.'
+    cppCompiler.args '-s'
+    cppCompiler.args '-DNDEBUG'
+    cppCompiler.args '-DTIMEOUT'
+}
+def tommathSpecificSetting(cppCompiler, linker, targetPlatform) {
+    cppCompiler.args '-fexceptions'
+    cppCompiler.args '-Os' // standard optimization (default)
+    cppCompiler.args '-I.'
+    cppCompiler.args '-s'
+    if (targetPlatform.operatingSystem.name == 'osx') {
+        cppCompiler.args '-stdlib=libc++'
+        cppCompiler.args '-s'
+        cppCompiler.args '-NDEBUG'
+        linker.args '-Wl,-search_paths_first'
+        linker.args '-stdlib=libc++', '-lc++'
+        linker.args '-lpthread', '-dynamiclib'
+        linker.args '-framework', 'Accelerate'
+        linker.args '-framework', 'CoreFoundation'
+        linker.args '-s' // stripping
+        linker.args '-NDEBUG'
+    }
+}
 def appleCompilerArgs(args) {
     // Gradle is including "sensible default" include paths that are based on the host OS that break cross-compilation
     // The only fix as I see it is to clear out all includes except the ones that point to protos
@@ -309,25 +341,6 @@ def macosCompilerArgs(args, target) {
 }
 
 model {
-    repositories {
-        libs(PrebuiltLibraries) {
-            mpfr {
-                binaries.withType(StaticLibraryBinary) {
-                    def arch = targetPlatform.architecture.name
-                    def os = targetPlatform.operatingSystem.name
-                    staticLibraryFile = file("src/jni/prebuilt/$os/$arch/libmpfr.a")
-                }
-            }
-            gmp {
-                binaries.withType(StaticLibraryBinary) {
-                    def arch = targetPlatform.architecture.name
-                    def os = targetPlatform.operatingSystem.name
-                    staticLibraryFile = file("src/jni/prebuilt/$os/$arch/libgmp.a")
-                }
-            }
-        }
-    }
-
     platforms {
         win64 {
             architecture 'x64'
@@ -499,6 +512,33 @@ model {
     }
 
     components {
+        // tommath static lib
+        tommath(NativeLibrarySpec) {
+            targetPlatform 'ios_arm64'
+            targetPlatform 'iphonesimulator_x86_64'
+            targetPlatform 'iphonesimulator_arm64'
+            targetPlatform 'maccatalyst_x86_64'
+            targetPlatform 'maccatalyst_arm64'
+            if (isMac) {
+                targetPlatform 'osx_amd64'
+                targetPlatform 'osx_arm64'
+            }
+            targetPlatform 'rpi'
+            binaries.all {
+                tommathSpecificSetting(cppCompiler, linker, targetPlatform)
+                if (targetPlatform.operatingSystem.name == 'ios'
+                    || targetPlatform.operatingSystem.name == 'iphonesimulator'
+                    || targetPlatform.operatingSystem.name == 'maccatalyst') {
+                    tommathiOSSetting(cppCompiler)
+                    if (targetPlatform.architecture.name == 'arm-v8') {
+                        cppCompiler.define 'x86_64'
+                    }
+                } else if (targetPlatform.operatingSystem.name == 'osx') {
+                    cppCompiler.define 'NO_GETTEXT'
+                }
+                cppCompiler.args '-fpermissive' // needed for recent G++
+            }
+        }
         // giac static libary
         giac(NativeLibrarySpec) {
             targetPlatform 'linux64'
@@ -706,6 +746,13 @@ task giacIosStaticLibrary(dependsOn: [
     'giacMaccatalyst_arm64StaticLibrary'
 ])
 
+task tommathIosStaticLibrary(dependsOn: [
+    'tommathIos_arm64StaticLibrary',
+    'tommathIphonesimulator_x86_64StaticLibrary',
+    'tommathIphonesimulator_arm64StaticLibrary',
+    'tommathMaccatalyst_x86_64StaticLibrary',
+    'tommathMaccatalyst_arm64StaticLibrary'
+])
 task configBundle(type: Exec) {
     executable 'bundle'
     args 'config', 'set', 'path', './.gems'
@@ -718,29 +765,26 @@ task installGems(type: Exec, dependsOn: 'configBundle') {
     workingDir rootDir
 }
 
-task createFatIosStaticLibrary(dependsOn: ['simpleInterfaceIosStaticLibrary', 'giacIosStaticLibrary']) {
+task createFatIosStaticLibrary(dependsOn: ['simpleInterfaceIosStaticLibrary', 'giacIosStaticLibrary', 'tommathIosStaticLibrary']) {
     doLast {
         def output = "${buildDir}/libs/merged"
         ["arm64"].each {
             mergeLibraries("Giac", "${output}/ios_${it}", clangIosPath,
                 "${buildDir}/libs/giac/static/ios_${it}/libgiac.a",
                 "${buildDir}/libs/simpleInterface/static/ios_${it}/libSimpleInterface.a",
-                "src/jni/prebuilt/ios/${it}/libgmp.a",
-                "src/jni/prebuilt/ios/${it}/libmpfr.a")
+        		"${buildDir}/libs/tommath/static/ios_${it}/libtommath.a")
         }
         ["arm64", "x86_64"].each {
             mergeLibraries("Giac", "${output}/iphonesimulator_${it}", clangIphonesimulatorPath,
                 "${buildDir}/libs/giac/static/iphonesimulator_${it}/libgiac.a",
                 "${buildDir}/libs/simpleInterface/static/iphonesimulator_${it}/libSimpleInterface.a",
-                "src/jni/prebuilt/iphonesimulator/${it}/libgmp.a",
-                "src/jni/prebuilt/iphonesimulator/${it}/libmpfr.a")
+                "${buildDir}/libs/tommath/static/iphonesimulator_${it}/libtommath.a")
         }
         ["arm64", "x86_64"].each {
             mergeLibraries("Giac", "${output}/maccatalyst_${it}", clangIphonesimulatorPath,
                 "${buildDir}/libs/giac/static/maccatalyst_${it}/libgiac.a",
                 "${buildDir}/libs/simpleInterface/static/maccatalyst_${it}/libSimpleInterface.a",
-                "src/jni/prebuilt/maccatalyst/${it}/libgmp.a",
-                "src/jni/prebuilt/maccatalyst/${it}/libmpfr.a")
+        		"${buildDir}/libs/tommath/static/maccatalyst_${it}/libtommath.a")
         }
 
         lipo("Giac", "${output}/ios", clangIosPath, "${output}/ios_arm64/Giac.a")
@@ -764,13 +808,24 @@ task createIosFramework(dependsOn: createFatIosStaticLibrary, type: Copy) {
         include "*.hpp"
         into "Giac.framework/Headers"
     }
+    from("src/giac/headers") {
+        include "*.h"
+        into "Giac.framework/Headers"
+    }
     from("src/simpleInterface/framework") {
         include "Info.plist"
         into "Giac.framework/Resources"
     }
+    from("src/simpleInterface/framework") {
+        include "framework_iphone.plist"
+        rename "framework_iphone.plist", "Info.plist"
+        into "Giac.framework"
+    }
 
     destinationDir = file("${buildDir}/libs/framework/ios")
 }
+
+
 
 task createIphonesimulatorFramework(dependsOn: createFatIosStaticLibrary, type: Copy) {
     description "Creates iPhone Simlator framework"
@@ -783,48 +838,136 @@ task createIphonesimulatorFramework(dependsOn: createFatIosStaticLibrary, type: 
         include "*.hpp"
         into "Giac.framework/Headers"
     }
+    from("src/giac/headers") {
+        include "*.h"
+        into "Giac.framework/Headers"
+    }
+    from("src/simpleInterface/module") {
+        include "module.modulemap"
+        into "Giac.framework/Modules"
+    }
     from("src/simpleInterface/framework") {
-        include "framework.plist"
-        rename "framework.plist", "Info.plist"
-        into "Giac.framework/Resources"
+        include "framework_simulator.plist"
+        rename "framework_simulator.plist", "Info.plist"
+        into "Giac.framework"
     }
 
     destinationDir = file("${buildDir}/libs/framework/iphonesimulator")
 }
+
 
 task createMaccatalystFramework(dependsOn: createFatIosStaticLibrary, type: Copy) {
     description "Creates Mac Catalyst framework"
     from("${buildDir}/libs/merged/maccatalyst") {
         include "Giac.a"
         rename "Giac.a", "Giac"
-        into "Giac.framework"
+        into "Giac.framework/Versions/A"
     }
     from("src/simpleInterface/headers") {
         include "*.hpp"
-        into "Giac.framework/Headers"
+        into "Giac.framework/Versions/A/Headers"
+    }
+    from("src/giac/headers") {
+        include "*.h"
+        into "Giac.framework/Versions/A/Headers"
+    }
+    from("src/simpleInterface/module") {
+        include "module.modulemap"
+        into "Giac.framework/Versions/A/Modules"
+    }
+    from("src/simpleInterface/framework") {
+        include "framework_macos.plist"
+        rename "framework_macos.plist", "Info.plist"
+        into "Giac.framework/Versions/A"
+    }
+
+    doLast {
+        def frameworkDir = file("${buildDir}/libs/framework/maccatalyst/Giac.framework")
+        
+        // Ensure Versions directory exists
+        def versionsDir = new File(frameworkDir, "Versions/A")
+        //versionsDir.mkdirs()
+
+        // Ensure Resources exists inside Versions/A
+        def resourcesDir = new File(versionsDir, "Resources")
+        resourcesDir.mkdirs()
+
+        // Remove existing symlinks if they exist
+        new File(frameworkDir, "Giac").delete()
+        new File(frameworkDir, "Headers").delete()
+        new File(frameworkDir, "Resources").delete()
+        new File(frameworkDir, "Versions/Current").delete()
+
+        // Ensure the correct structure and symbolic links
+        exec {
+            commandLine 'ln', '-sf', 'A', "${buildDir}/libs/framework/maccatalyst/Giac.framework/Versions/Current"
+        }
+        exec {
+            commandLine 'ln', '-sf', 'Versions/Current/Giac', "${buildDir}/libs/framework/maccatalyst/Giac.framework/Giac"
+        }
+        exec {
+            commandLine 'ln', '-sf', 'Versions/Current/Info.plist', new File(frameworkDir, "Info.plist").absolutePath
+        }
+        exec {
+            commandLine 'ln', '-sf', 'Versions/Current/Headers', "${buildDir}/libs/framework/maccatalyst/Giac.framework/Headers"
+        }
+        exec {
+            commandLine 'ln', '-sf', 'Versions/Current/Modules', "${buildDir}/libs/framework/maccatalyst/Giac.framework/Modules"
+        }
+	exec {
+            commandLine 'ln', '-sf', 'Versions/Current/Resources', "${buildDir}/libs/framework/maccatalyst/Giac.framework/Resources"
+        }
     }
 
     destinationDir = file("${buildDir}/libs/framework/maccatalyst")
 }
 
 
-task createIosXcframework(dependsOn: [createIosFramework, createIphonesimulatorFramework, createMaccatalystFramework], type: Copy) {
+task createIosXcframework(dependsOn: [createIosFramework, createIphonesimulatorFramework, createMaccatalystFramework]) {
     description "Creates XCFramework"
-    from("${buildDir}/libs/framework/iphonesimulator") {
-        into "ios-arm64_x86_64-simulator"
-    }
-    from("${buildDir}/libs/framework/ios") {
-        into "ios-arm64"
-    }
-    from("${buildDir}/libs/framework/maccatalyst") {
-        into "ios-arm64_x86_64-maccatalyst"
-    }
-    from("src/simpleInterface/framework") {
-        include "xcframework.plist"
-        rename "xcframework.plist", "Info.plist"
-    }
+    
+    doLast {
+        ant.copy(todir: "${buildDir}/libs/framework/Giac.xcframework/ios-arm64_x86_64-simulator", preservelastmodified: true, failonerror: true) {
+            fileset(dir: "${buildDir}/libs/framework/iphonesimulator", followsymlinks: false)
+        }
+        ant.copy(todir: "${buildDir}/libs/framework/Giac.xcframework/ios-arm64", preservelastmodified: true, failonerror: true) {
+            fileset(dir: "${buildDir}/libs/framework/ios", followsymlinks: false)
+        }
+        ant.copy(todir: "${buildDir}/libs/framework/Giac.xcframework/ios-arm64_x86_64-maccatalyst", preservelastmodified: true, failonerror: true) {
+            fileset(dir: "${buildDir}/libs/framework/maccatalyst", followsymlinks: false)
+        }
+        ant.copy(file: "src/simpleInterface/framework/xcframework.plist", tofile: "${buildDir}/libs/framework/Giac.xcframework/Info.plist")
 
-    destinationDir = file("${buildDir}/libs/framework/Giac.xcframework")
+        copySymlinks("${buildDir}/libs/framework/iphonesimulator", "${buildDir}/libs/framework/Giac.xcframework/ios-arm64_x86_64-simulator")
+        copySymlinks("${buildDir}/libs/framework/ios", "${buildDir}/libs/framework/Giac.xcframework/ios-arm64")
+        copySymlinks("${buildDir}/libs/framework/maccatalyst", "${buildDir}/libs/framework/Giac.xcframework/ios-arm64_x86_64-maccatalyst")
+    }
+}
+
+import java.nio.file.Files
+import java.nio.file.Paths
+import java.nio.file.Path
+
+def copySymlinks(sourceDir, destDir) {
+    def srcDir = new File(sourceDir)
+    srcDir.eachFileRecurse { file ->
+        Path filePath = file.toPath()
+        if (Files.isSymbolicLink(filePath)) {
+            def relPath = srcDir.toPath().relativize(filePath)
+            def targetLink = new File(destDir, relPath.toString())
+
+            // Ensure the parent directories exist in the destination
+            targetLink.parentFile.mkdirs()
+
+            // Get the target of the symlink
+            Path target = Files.readSymbolicLink(filePath)
+
+            // Create the symlink in the destination
+            exec {
+                commandLine 'ln', '-sf', target.toString(), targetLink.absolutePath
+            }
+        }
+    }
 }
 
 task createPodspec() {
@@ -843,11 +986,11 @@ task createPodspec() {
 }
 
 task cocoapodsZip(dependsOn: createIosXcframework, type: Zip) {
-    baseName 'Giac'
+    archiveBaseName.set('Giac')
     from ("${buildDir}/libs/framework/Giac.xcframework") {
         into "Frameworks/Giac.xcframework"
     }
-    destinationDir = file("${buildDir}/cocoapods/")
+    destinationDirectory.set(file("${buildDir}/cocoapods/"))  // Corrected property
 }
 
 task publishPodspec(dependsOn: ['installGems', 'createPodspec', 'publishMavenZipPublicationToMavenRepository'], type: Exec) {
