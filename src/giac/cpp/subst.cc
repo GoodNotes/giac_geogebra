@@ -1739,42 +1739,55 @@ namespace giac {
     return res;
   }
 
-
-  gen _pow2exp(const gen & e,GIAC_CONTEXT){
-    if ( e.type==_STRNG && e.subtype==-1) return  e;
-    if (e.type==_VECT){
-      const_iterateur it=e._VECTptr->begin(),itend=e._VECTptr->end();
-      vecteur v;
-      v.reserve(itend-it);
-      for (;it!=itend;++it)
-	v.push_back(_pow2exp(*it,contextptr));
-      return gen(v,e.subtype);
-    }
-    if (e.type!=_SYMB)
+  int max_rec_level = 50;
+  gen _pow2exp_helper(const gen &e, GIAC_CONTEXT, int level)
+  {
+    if (level > max_rec_level)
       return e;
-    gen var,res;
-    if (is_algebraic_program(e,var,res))
-      return symbolic(at_program,makesequence(var,0,_pow2exp(res,contextptr)));
-    if ( (e._SYMBptr->sommet==at_pow || e._SYMBptr->sommet==at_surd || e._SYMBptr->sommet==at_NTHROOT) && e._SYMBptr->feuille.type==_VECT && e._SYMBptr->feuille._VECTptr->size()==2){ 
-      vecteur v=*e._SYMBptr->feuille._VECTptr;
-      if (e._SYMBptr->sommet==at_NTHROOT)
-	swapgen(v[0],v[1]);
+    if (e.type == _STRNG && e.subtype == -1)
+      return e;
+    if (e.type == _VECT)
+    {
+      const_iterateur it = e._VECTptr->begin(), itend = e._VECTptr->end();
+      vecteur v;
+      v.reserve(itend - it);
+      for (; it != itend; ++it)
+        v.push_back(_pow2exp_helper(*it, contextptr, level + 1));
+      return gen(v, e.subtype);
+    }
+    if (e.type != _SYMB)
+      return e;
+    gen var, res;
+    if (is_algebraic_program(e, var, res))
+      return symbolic(at_program, makesequence(var, 0, _pow2exp_helper(res, contextptr, level + 1)));
+    if ((e._SYMBptr->sommet == at_pow || e._SYMBptr->sommet == at_surd || e._SYMBptr->sommet == at_NTHROOT) && e._SYMBptr->feuille.type == _VECT && e._SYMBptr->feuille._VECTptr->size() == 2)
+    {
+      vecteur v = *e._SYMBptr->feuille._VECTptr;
+      if (e._SYMBptr->sommet == at_NTHROOT)
+        swapgen(v[0], v[1]);
       /*
       if (v[0].type==_VECT)
-	return gensizeerr(gettext("Conversion of ^ of list/matrices to exp/ln not allowed. For symbolic power of square matrices, try matpow instead of ^"));
+  return gensizeerr(gettext("Conversion of ^ of list/matrices to exp/ln not allowed. For symbolic power of square matrices, try matpow instead of ^"));
       */
-      if (v[1].type!=_INT_ && v[1].type!=_FRAC){
-	gen tmp=-v[0];
-	gen tmp1=(e._SYMBptr->sommet==at_surd || e._SYMBptr->sommet==at_NTHROOT)?inv(v[1],contextptr):v[1];
-	tmp1=_pow2exp(tmp1,contextptr);
-	if (is_strictly_positive(tmp,contextptr))
-	  return exp(tmp1*_pow2exp(ln(tmp,contextptr),contextptr),contextptr)*symb_exp(v[1]*cst_i*cst_pi);
-	else
-	  return exp(tmp1*_pow2exp(ln(v[0],contextptr),contextptr),contextptr);
+      if (v[1].type != _INT_ && v[1].type != _FRAC)
+      {
+        gen tmp = -v[0];
+        gen tmp1 = (e._SYMBptr->sommet == at_surd || e._SYMBptr->sommet == at_NTHROOT) ? inv(v[1], contextptr) : v[1];
+        tmp1 = _pow2exp_helper(tmp1, contextptr, level + 1);
+        if (is_strictly_positive(tmp, contextptr))
+          return exp(tmp1 * _pow2exp_helper(ln(tmp, contextptr), contextptr, level + 1), contextptr) * symb_exp(v[1] * cst_i * cst_pi);
+        else
+          return exp(tmp1 * _pow2exp_helper(ln(v[0], contextptr), contextptr, level + 1), contextptr);
       }
     }
-    return e._SYMBptr->sommet(_pow2exp(e._SYMBptr->feuille,contextptr),contextptr); 
+    return e._SYMBptr->sommet(_pow2exp_helper(e._SYMBptr->feuille, contextptr, level + 1), contextptr);
   }
+
+  gen _pow2exp(const gen &e, GIAC_CONTEXT)
+  {
+    return _pow2exp_helper(e, contextptr, 0);
+  }
+
   static const char _pow2exp_s []="pow2exp";
   static define_unary_function_eval (__pow2exp,&_pow2exp,_pow2exp_s);
   define_unary_function_ptr5( at_pow2exp ,alias_at_pow2exp,&__pow2exp,0,true);
