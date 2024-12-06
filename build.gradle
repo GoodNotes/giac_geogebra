@@ -519,6 +519,7 @@ model {
             targetPlatform 'iphonesimulator_arm64'
             targetPlatform 'maccatalyst_x86_64'
             targetPlatform 'maccatalyst_arm64'
+            targetPlatform 'win64'
             if (isMac) {
                 targetPlatform 'osx_amd64'
                 targetPlatform 'osx_arm64'
@@ -547,6 +548,7 @@ model {
             targetPlatform 'iphonesimulator_arm64'
             targetPlatform 'maccatalyst_x86_64'
             targetPlatform 'maccatalyst_arm64'
+            targetPlatform 'win64'
             if (isMac) {
                 targetPlatform 'osx_amd64'
                 targetPlatform 'osx_arm64'
@@ -576,6 +578,7 @@ model {
             targetPlatform 'iphonesimulator_arm64'
             targetPlatform 'maccatalyst_x86_64'
             targetPlatform 'maccatalyst_arm64'
+            targetPlatform 'win64'
 
             binaries.all {
                 lib library: 'giac', linkage: 'static'
@@ -655,6 +658,7 @@ model {
                 targetPlatform 'osx_amd64'
                 targetPlatform 'osx_arm64'
             }
+            targetPlatform 'win64'
 
             binaries.all {
                 lib library: 'GeoGebraCAS', linkage: 'shared'
@@ -690,6 +694,7 @@ model {
                 targetPlatform 'osx_amd64'
                 targetPlatform 'osx_arm64'
             }
+            targetPlatform 'win64'
 
             sources.cpp {
                 source {
@@ -711,6 +716,17 @@ model {
                     linker.args '-stdlib=libc++', '-lc++'
                     linker.args '-lgmp', '-lmpfr', '-lpthread'
                     linker.args '-L', file("src/jni/prebuilt/osx/${targetPlatform.architecture.name}").toString(), '-dynamiclib'
+                }
+            }
+        }
+    }
+
+     visualStudio {
+        solution {
+            // Add all components of type NativeLibrarySpec to the solution
+            components.withType(NativeLibrarySpec).each { component ->
+            if (component.name in ['giac', 'tommath', 'simpleInterface', 'GeoGebraCASDemo', 'GeoGebraCAS']) { // Filter by name
+                    addProject(component)
                 }
             }
         }
@@ -765,6 +781,44 @@ task installGems(type: Exec, dependsOn: 'configBundle') {
     workingDir rootDir
 }
 
+task createFatIosStaticLibrary_MPFR_GMP(dependsOn: ['simpleInterfaceIosStaticLibrary', 'giacIosStaticLibrary', 'tommathIosStaticLibrary']) {
+    doLast {
+        def output = "${buildDir}/libs/merged"
+        ["arm64"].each {
+            mergeLibraries("Giac", "${output}/ios_${it}", clangIosPath,
+                "${buildDir}/libs/giac/static/ios_${it}/libgiac.a",
+                "${buildDir}/libs/simpleInterface/static/ios_${it}/libSimpleInterface.a",
+                "src/jni/prebuilt/ios/${it}/libgmp.a",
+                "src/jni/prebuilt/ios/${it}/libmpfr.a",
+		"${buildDir}/libs/tommath/static/ios_${it}/libtommath.a")
+        }
+        ["arm64", "x86_64"].each {
+            mergeLibraries("Giac", "${output}/iphonesimulator_${it}", clangIphonesimulatorPath,
+                "${buildDir}/libs/giac/static/iphonesimulator_${it}/libgiac.a",
+                "${buildDir}/libs/simpleInterface/static/iphonesimulator_${it}/libSimpleInterface.a",
+                "src/jni/prebuilt/iphonesimulator/${it}/libgmp.a",
+                "src/jni/prebuilt/iphonesimulator/${it}/libmpfr.a",
+		"${buildDir}/libs/tommath/static/iphonesimulator_${it}/libtommath.a")
+        }
+        ["arm64", "x86_64"].each {
+            mergeLibraries("Giac", "${output}/maccatalyst_${it}", clangIphonesimulatorPath,
+                "${buildDir}/libs/giac/static/maccatalyst_${it}/libgiac.a",
+                "${buildDir}/libs/simpleInterface/static/maccatalyst_${it}/libSimpleInterface.a",
+                "src/jni/prebuilt/maccatalyst/${it}/libgmp.a",
+                "src/jni/prebuilt/maccatalyst/${it}/libmpfr.a",
+		"${buildDir}/libs/tommath/static/maccatalyst_${it}/libtommath.a")
+        }
+
+        lipo("Giac", "${output}/ios", clangIosPath, "${output}/ios_arm64/Giac.a")
+        lipo("Giac", "${output}/iphonesimulator", clangIphonesimulatorPath,
+            "${output}/iphonesimulator_arm64/Giac.a",
+            "${output}/iphonesimulator_x86_64/Giac.a")
+        lipo("Giac", "${output}/maccatalyst", clangIphonesimulatorPath,
+            "${output}/maccatalyst_arm64/Giac.a",
+            "${output}/maccatalyst_x86_64/Giac.a")
+    }
+}
+
 task createFatIosStaticLibrary(dependsOn: ['simpleInterfaceIosStaticLibrary', 'giacIosStaticLibrary', 'tommathIosStaticLibrary']) {
     doLast {
         def output = "${buildDir}/libs/merged"
@@ -797,7 +851,7 @@ task createFatIosStaticLibrary(dependsOn: ['simpleInterfaceIosStaticLibrary', 'g
     }
 }
 
-task createIosFramework(dependsOn: createFatIosStaticLibrary, type: Copy) {
+task createIosFramework(dependsOn: createFatIosStaticLibrary_MPFR_GMP, type: Copy) {
     description "Creates iOS framework"
     from("${buildDir}/libs/merged/ios") {
         include "Giac.a"
@@ -827,7 +881,7 @@ task createIosFramework(dependsOn: createFatIosStaticLibrary, type: Copy) {
 
 
 
-task createIphonesimulatorFramework(dependsOn: createFatIosStaticLibrary, type: Copy) {
+task createIphonesimulatorFramework(dependsOn: createFatIosStaticLibrary_MPFR_GMP, type: Copy) {
     description "Creates iPhone Simlator framework"
     from("${buildDir}/libs/merged/iphonesimulator") {
         include "Giac.a"
@@ -856,7 +910,7 @@ task createIphonesimulatorFramework(dependsOn: createFatIosStaticLibrary, type: 
 }
 
 
-task createMaccatalystFramework(dependsOn: createFatIosStaticLibrary, type: Copy) {
+task createMaccatalystFramework(dependsOn: createFatIosStaticLibrary_MPFR_GMP, type: Copy) {
     description "Creates Mac Catalyst framework"
     from("${buildDir}/libs/merged/maccatalyst") {
         include "Giac.a"
@@ -1255,6 +1309,15 @@ task emMakeMpfr {
         exec {
             commandLine 'bash', '-c', "source $emsdkRunDir/emsdk_env.sh; ${emscriptenDir}/emmake make"
             workingDir mpfrSourceDir
+        }
+    }
+}
+
+tasks.register('listComponents') {
+    doLast {
+        println "Available components:"
+        components.each { name, component ->
+            println "- $name"
         }
     }
 }
