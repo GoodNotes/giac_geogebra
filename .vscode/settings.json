@@ -1,0 +1,11 @@
+{
+    "files.associations": {
+        "algorithm": "cpp",
+        "__availability": "cpp",
+        "__locale": "cpp",
+        "locale": "cpp",
+        "ostream": "cpp",
+        "print": "cpp",
+        "version": "cpp"
+    }
+}

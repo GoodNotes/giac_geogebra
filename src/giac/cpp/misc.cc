@@ -7732,10 +7732,22 @@ static define_unary_function_eval (__os_version,&_os_version,_os_version_s);
 #endif
 
   // step by step utilities
-  gen rm_nontrig(const gen &g){
-    if (g.type!=_SYMB || g._SYMBptr->sommet==at_exp || g._SYMBptr->sommet==at_sin || g._SYMBptr->sommet==at_cos || g._SYMBptr->sommet==at_tan)
+  gen rm_nontrig(const gen &g,const gen &x){
+    if (g.type!=_SYMB)
       return g;
-    return g._SYMBptr->feuille;
+    gen f=g._SYMBptr->feuille;
+    if (g._SYMBptr->sommet==at_exp || g._SYMBptr->sommet==at_sin || g._SYMBptr->sommet==at_cos || g._SYMBptr->sommet==at_tan){
+      vecteur vx=lvarx(f,x);
+      for (int i=0;i<vx.size();++i){
+        if (vx[i].type!=_SYMB)
+          return g;
+        if (vx[i]._SYMBptr->sommet==at_exp || vx[i]._SYMBptr->sommet==at_sin || vx[i]._SYMBptr->sommet==at_cos || vx[i]._SYMBptr->sommet==at_tan)
+          continue;
+        return g;
+      }
+      return f;
+    }
+    return f;
   }
 
   bool is_periodic(const gen & f,const gen & x,gen & periode,GIAC_CONTEXT){
@@ -7745,7 +7757,7 @@ static define_unary_function_eval (__os_version,&_os_version,_os_version_s);
       vecteur w(vx);
       // remove non trig rootnodes up to fixpoint
       for (unsigned i=0;i<vx.size();++i)
-        vx[i]=rm_nontrig(vx[i]);
+        vx[i]=rm_nontrig(vx[i],x);
       vx=lvarx(vx,x);
       if (vx==w)
         break;
@@ -7786,6 +7798,22 @@ static define_unary_function_eval (__os_version,&_os_version,_os_version_s);
     periode=ratnormal(cst_two_pi/periode);
     return !is_zero(periode);
   }
+
+  gen _periode(const gen & a,GIAC_CONTEXT){
+    if (a.type==_STRNG && a.subtype==-1) return  a;
+    vecteur v=gen2vecteur(a);
+    if (v.size()==1)
+      v.push_back(ggb_var(a));
+    if (v.size()!=2)
+      return gensizeerr(contextptr);
+    gen g=v[0],x=v[1],T;
+    if (!is_periodic(g,x,T,contextptr))
+      return undef;
+    return T;
+  }
+  static const char _periode_s []="periode";
+  static define_unary_function_eval (__periode,&_periode,_periode_s);
+  define_unary_function_ptr5( at_periode ,alias_at_periode,&__periode,0,true);
 
   bool in_domain(const gen & df,const gen &x,const gen & x0,GIAC_CONTEXT){
     if (df==x)

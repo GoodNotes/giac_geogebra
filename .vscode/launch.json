@@ -1,0 +1,22 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "Launch with LLDB",
+        "type": "lldb",
+        "request": "launch",
+        "program": "/Users/novaknovakovic/Documents/GitHub/giac_geogebra/build/exe/geoGebraCASDemo/osx_arm64/GeoGebraCASDemo", // Path to your executable
+        "args": [], // Arguments to pass to the program
+        "cwd": "/Users/novaknovakovic/Documents/GitHub/giac_geogebra/build/exe/geoGebraCASDemo/osx_arm64/", // Current working directory
+        "stopAtEntry": false, // Set to true to break at program entry
+        "externalConsole": false // Use the integrated terminal
+      },
+    //   {
+    //     "name": "Attach to Process",
+    //     "type": "lldb",
+    //     "request": "attach",
+    //     "pid": "${command:pickProcess}", // Prompts to pick the process ID
+    //     "stopAtEntry": false
+    //   }
+    ]
+  }gi
