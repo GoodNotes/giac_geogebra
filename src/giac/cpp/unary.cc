@@ -1,5 +1,6 @@
 // -*- mode:C++ ; compile-command: "g++ -I.. -g -c unary.cc -DIN_GIAC -DHAVE_CONFIG_H" -*-
 #include "giacPCH.h"
+#include "giacintl.h"
 
 /*
  *  Copyright (C) 2000,14 B. Parisse, Institut Fourier, 38402 St Martin d'Heres
@@ -28,11 +29,15 @@ using namespace std;
 #include "input_lexer.h"
 #include "rpn.h"
 #include "sparse.h"
-#include "giacintl.h"
 
 #ifndef NO_NAMESPACE_GIAC
 namespace giac {
 #endif // ndef NO_NAMESPACE_GIAC
+
+#ifdef HAVE_LIBPTHREAD
+  pthread_mutex_t unary_function_ptr::mutex = PTHREAD_MUTEX_INITIALIZER;
+#endif
+
   // unary_function_ptr
 
   gen unary_function_ptr::operator () (const gen & arg,const context * context_ptr) const{
