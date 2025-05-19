@@ -7732,20 +7732,68 @@ static define_unary_function_eval (__os_version,&_os_version,_os_version_s);
 #endif
 
   // step by step utilities
-  gen rm_nontrig(const gen &g){
-    if (g.type!=_SYMB || g._SYMBptr->sommet==at_exp || g._SYMBptr->sommet==at_sin || g._SYMBptr->sommet==at_cos || g._SYMBptr->sommet==at_tan)
+  gen rm_nontrig(const gen &g,const gen &x){
+    if (g.type!=_SYMB)
       return g;
-    return g._SYMBptr->feuille;
+    gen f=g._SYMBptr->feuille;
+    if (g._SYMBptr->sommet==at_exp || g._SYMBptr->sommet==at_sin || g._SYMBptr->sommet==at_cos || g._SYMBptr->sommet==at_tan){
+      vecteur vx=lvarx(f,x);
+      for (int i=0;i<vx.size();++i){
+        if (vx[i].type!=_SYMB)
+          return g;
+        if (vx[i]._SYMBptr->sommet==at_exp || vx[i]._SYMBptr->sommet==at_sin || vx[i]._SYMBptr->sommet==at_cos || vx[i]._SYMBptr->sommet==at_tan)
+          continue;
+        return g;
+      }
+      return f;
+    }
+    return f;
   }
 
   bool is_periodic(const gen & f,const gen & x,gen & periode,GIAC_CONTEXT){
     periode=0;
     vecteur vx=lvarx(f,x);
+    if (!lop(vx,at_ceil).empty())
+      return is_periodic(ceil2floor(f,contextptr),x,periode,contextptr);
+    // special code for floor of linear expressions
+    vecteur vf=lop(vx,at_floor);
+    if (!vf.empty()){
+      gen T=0,a,b;
+      vecteur Ti,rep,repT;
+      for (int i=0;i<vf.size();++i){
+        gen vi=vf[i];
+        gen fi=vi._SYMBptr->feuille;
+        if (is_linear_wrt(fi,x,a,b,contextptr)){
+          gen curT=inv(a,contextptr);
+          Ti.push_back(curT);
+          if (T==0)
+            T=curT;
+          else
+            T=lcm(T,curT);
+          rep.push_back(gen("var_floor"+print_INT_(i),contextptr));
+        }
+        else {
+          T=0; break;
+        }
+      }
+      if (T!=0){
+        for (int i=0;i<Ti.size();++i)
+          repT.push_back(rep[i]+T/Ti[i]);
+        gen F=subst(f,vf,rep,false,contextptr);
+        gen FT=subst(F,x,x+T,false,contextptr);
+        FT=subst(FT,rep,repT,false,contextptr);
+        gen FTF=ratnormal(FT-F,contextptr);
+        if (is_zero(FTF)){
+          periode=T;
+          return true;
+        }
+      }
+    }
     for (;;){
       vecteur w(vx);
       // remove non trig rootnodes up to fixpoint
       for (unsigned i=0;i<vx.size();++i)
-        vx[i]=rm_nontrig(vx[i]);
+        vx[i]=rm_nontrig(vx[i],x);
       vx=lvarx(vx,x);
       if (vx==w)
         break;
@@ -7786,6 +7834,22 @@ static define_unary_function_eval (__os_version,&_os_version,_os_version_s);
     periode=ratnormal(cst_two_pi/periode);
     return !is_zero(periode);
   }
+
+  gen _periode(const gen & a,GIAC_CONTEXT){
+    if (a.type==_STRNG && a.subtype==-1) return  a;
+    vecteur v=gen2vecteur(a);
+    if (v.size()==1)
+      v.push_back(ggb_var(a));
+    if (v.size()!=2)
+      return gensizeerr(contextptr);
+    gen g=v[0],x=v[1],T;
+    if (!is_periodic(g,x,T,contextptr))
+      return undef;
+    return T;
+  }
+  static const char _periode_s []="periode";
+  static define_unary_function_eval (__periode,&_periode,_periode_s);
+  define_unary_function_ptr5( at_periode ,alias_at_periode,&__periode,0,true);
 
   bool in_domain(const gen & df,const gen &x,const gen & x0,GIAC_CONTEXT){
     if (df==x)

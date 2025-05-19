@@ -133,8 +133,11 @@ namespace giac {
     case _INT_: case _DOUBLE_: case _ZINT: case _CPLX: case _POLY: case _EXT: case _USER: case _REAL:
       return;
     case _IDNT:
-      if (strcmp(e._IDNTptr->id_name,string_undef))
-	addtolvar(e,l);
+    {
+    identificateur *tmp = e._IDNTptr;
+      if (tmp == nullptr) return;
+      if (strcmp(tmp->id_name,string_undef))
+	addtolvar(e,l);}
       return ;
     case _SYMB:
       lvar_symbolic(e,l);

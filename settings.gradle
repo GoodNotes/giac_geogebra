@@ -1,2 +1,3 @@
-include 'giac-android'
-include 'giac-gwt'
+//include 'giac-android'
+//include 'giac-gwt'
+rootProject.name = 'giac_geogebra'

@@ -44,6 +44,9 @@ extern size_t stackptr;
 #ifdef HAVE_ALLOCA_H
 #include <alloca.h>
 #endif
+#ifdef HAVE_LIBPTHREAD
+#include <pthread.h>
+#endif
 
 // #include <gmp.h>
 #if defined USE_GMP_REPLACEMENTS 
@@ -515,19 +518,33 @@ namespace giac {
     }
 #endif // NO_UNARY_FUNCTION_COMPOSE
     bool quoted() const ;
+#ifdef HAVE_LIBPTHREAD
+    static pthread_mutex_t mutex;
+#endif
     inline bool operator ==(const unary_function_ptr & u) const { 
-      // if (&u==this) return true; 
-      return ((ulonglong)(_ptr) & ~(uintptr_t)3 )  == ((ulonglong)( u._ptr) & ~(uintptr_t)3 );
+#ifdef HAVE_LIBPTHREAD
+      pthread_mutex_lock(&mutex);
+#endif
+      bool result = ((ulonglong)(_ptr) & ~(uintptr_t)3 )  == ((ulonglong)( u._ptr) & ~(uintptr_t)3 );
+#ifdef HAVE_LIBPTHREAD
+      pthread_mutex_unlock(&mutex);
+#endif
+      return result;
 #ifdef x86_64
       //return ((ulonglong)(_ptr) & 0xfffffffffffffffc)  == ((ulonglong)( u._ptr) & 0xfffffffffffffffc ); 
 #else
       //return ((size_t)(_ptr) & 0xfffffffc) == ((size_t)(u._ptr) & 0xfffffffc); 
 #endif
     }
-    inline bool operator !=(const unary_function_ptr & u) const { return !(*this==u); }
     inline bool operator ==(const unary_function_ptr * u) const { 
-      // if (&u==this) return true; 
-      return u && ( ((ulonglong)(_ptr) &  ~(uintptr_t)3 ) == ((ulonglong)(u->_ptr) &  ~(uintptr_t)3) ); 
+#ifdef HAVE_LIBPTHREAD
+      pthread_mutex_lock(&mutex);
+#endif
+      bool result = u && ( ((ulonglong)(_ptr) &  ~(uintptr_t)3 ) == ((ulonglong)(u->_ptr) &  ~(uintptr_t)3) );
+#ifdef HAVE_LIBPTHREAD
+      pthread_mutex_unlock(&mutex);
+#endif
+      return result;
 #ifdef x86_64
       //return u && ( ((ulonglong)(_ptr) & 0xfffffffffffffffc) == ((ulonglong)(u->_ptr) & 0xfffffffffffffffc) ); 
 #else

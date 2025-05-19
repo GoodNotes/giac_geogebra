@@ -15,16 +15,20 @@ static void finalizer(void) { }
 #define EXPORT
 #endif
 
-context ct;
+context *ct;
 
 extern "C" {
-    EXPORT void initializeCAS() { return; }
+    EXPORT void initializeCAS() { ct = new context(); }
+    EXPORT void clearContextCAS() { delete ct;}
+    EXPORT void clearGlobalVars() { giac::release_globals(); }
     EXPORT string evaluateCAS(string command) {
-        gen e(string(command), &ct);
+        gen e(string(command), ct);
         try {
-            return giac::print(giac::eval(e, &ct), &ct);
+            auto s = giac::print(giac::eval(e, ct), ct);
+            e.delete_gen();
+            return s;
             } catch (std::runtime_error & err) {
             cerr << err.what() << endl;
             }
         }
-    }
+}

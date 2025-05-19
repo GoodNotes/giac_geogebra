@@ -9,6 +9,9 @@
 #endif
 
 #include "giacPCH.h"
+#if defined(EMCC) || defined(EMCC2)
+#include <emscripten.h>
+#endif
 
 /*  
  *  Copyright (C) 2000,14 B. Parisse, Institut Fourier, 38402 St Martin d'Heres
@@ -4931,7 +4934,7 @@ extern "C" void Sleep(unsigned int miliSecond);
     string file=orig_file;
     string s;
     bool url=false;
-    if (file.substr(0,4)=="http"){
+    if (file.size()>=4 && file.substr(0,4)=="http" || file.substr(0,4)=="mail"){
       url=true;
       s="'"+file+"'";
     }
@@ -5040,6 +5043,8 @@ extern "C" void Sleep(unsigned int miliSecond);
 	browser="chromium";
       if (!access("/usr/bin/firefox",R_OK))
 	browser="firefox";
+      if (!access("/usr/bin/open",R_OK))
+	browser="open";
 #endif
     }
     // find binary name
@@ -5066,12 +5071,20 @@ extern "C" void Sleep(unsigned int miliSecond);
   }
 
   bool system_browser_command(const string & file){
+#ifdef EMCC2
+    EM_ASM_ARGS({
+        var url=UTF8ToString($0);
+        console.log('system_browser_command',url);
+        window.open(url, '_blank').focus();
+      },file.c_str());
+    return true;
+#endif
 #if defined BESTA_OS || defined POCKETCAS
     return false;
 #else
 #ifdef WIN32
     string res=file;
-    if (file.size()>4 && file.substr(0,4)!="http" && file.substr(0,4)!="file"){
+    if (file.size()>4 && file.substr(0,4)!="http" && file.substr(0,4)!="file" && file.substr(0,4)!="mail"){
       if (res[0]!='/')
 	res=giac_aide_dir()+res;
       // Remove # trailing part of URL
@@ -5107,7 +5120,7 @@ extern "C" void Sleep(unsigned int miliSecond);
 #ifdef __MINGW_H
     while (res.size()>=2 && res.substr(0,2)=="./")
       res=res.substr(2,res.size()-2);
-    if (res.size()<4 || res.substr(0,4)!="http")
+    if (res.size()<4 || (res.substr(0,4)!="http" && res.substr(0,4)!="mail"))
       res = "file:///c:/xcaswin/"+res;
     CERR << "running open on " << res << '\n';
     //ShellExecute(NULL,"open","file:///c:/xcaswin/doc/fr/cascmd_fr/index.html",\
@@ -8235,6 +8248,12 @@ void update_lexer_localization(const std::vector<int> & v,std::map<std::string,s
   // elif ...: -> elif ... then [nothing in stack]
   // try: ... except: ...
   std::string python2xcas(const std::string & s_orig,GIAC_CONTEXT){
+    if (strncmp(s_orig.c_str(),"spreadsheet[",12)==0)
+      return s_orig;
+    if (strncmp(s_orig.c_str(),"function",8)==0 || strncmp(s_orig.c_str(),"fonction",8)==0){
+      python_compat(contextptr)=0;
+      return s_orig;
+    }
     if (xcas_mode(contextptr)>0 && abs_calc_mode(contextptr)!=38)
       return s_orig;
     if (abs_calc_mode(contextptr)==38){
@@ -9050,8 +9069,8 @@ void update_lexer_localization(const std::vector<int> & v,std::map<std::string,s
   // optional, call it just before exiting
   int release_globals(){
 #if !defined VISUALC && !defined KHICAS
-    delete normal_sin_pi_12_ptr_();
-    delete normal_cos_pi_12_ptr_();
+    //delete normal_sin_pi_12_ptr_();
+    //delete normal_cos_pi_12_ptr_();
 #endif
 #ifndef STATIC_BUILTIN_LEXER_FUNCTIONS
     if (debug_infolevel)

@@ -1,0 +1,7 @@
+module Giac {
+  header "Headers/giac.h"
+  header "Headers/ContextBridge.hpp"
+  header "Headers/GenBridge.hpp"
+  header "Headers/GiacBridge.h"
+  export *
+}

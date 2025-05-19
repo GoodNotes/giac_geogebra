@@ -26,6 +26,9 @@
 #include "monomial.h"
 #include "threaded.h"
 #include <algorithm>
+#ifdef HAVE_PTHREAD_H
+#include <pthread.h>
+#endif
 
 #ifndef NO_NAMESPACE_GIAC
 namespace giac {
@@ -92,14 +95,7 @@ namespace giac {
       sort(coord.begin(),coord.end(),m_is_strictly_greater); 
 #endif
     }
-    int lexsorted_degree() const{ 
-      if (!dim)
-	return 0;
-      if (coord.empty())
-	return 0;
-      else
-	return coord.front().index.front(); 
-    }
+    int lexsorted_degree() const;
     int degree(int n) const ;
     int valuation(int n) const ;
     index_t degree() const ;
@@ -310,6 +306,44 @@ namespace giac {
     this->tsort(); // sort(coord.begin(),coord.end(),m_is_strictly_greater);
   }
 
+
+#ifdef HAVE_LIBPTHREAD
+  static pthread_mutex_t lxsrtdeg_mutex = PTHREAD_MUTEX_INITIALIZER;
+  static pthread_mutex_t index_degree_mutex = PTHREAD_MUTEX_INITIALIZER;
+#endif
+  template <class T>
+  int tensor<T>::lexsorted_degree() const{ 
+#ifdef HAVE_LIBPTHREAD
+    pthread_mutex_lock(&lxsrtdeg_mutex);
+#endif
+    if (!dim){
+#ifdef HAVE_LIBPTHREAD
+    pthread_mutex_unlock(&lxsrtdeg_mutex);
+#endif
+      return 0;
+    }
+
+      if (coord.empty()){
+#ifdef HAVE_LIBPTHREAD
+    pthread_mutex_unlock(&lxsrtdeg_mutex);
+#endif
+      return 0;
+    }
+      monomial<T> frnt = *coord.begin();
+      index_m indx = frnt.index;
+      if (indx.riptr == nullptr){
+#ifdef HAVE_LIBPTHREAD
+    pthread_mutex_unlock(&lxsrtdeg_mutex);
+#endif
+      return 0;
+    }
+      index_t::iterator ifrntp = indx.begin();
+#ifdef HAVE_LIBPTHREAD
+    pthread_mutex_unlock(&lxsrtdeg_mutex);
+#endif
+	    return coord.front().index.front(); 
+    }
+
   template <class T>
   int tensor<T>::degree(int n) const {
     typename std::vector< monomial<T> >::const_iterator it=this->coord.begin();
@@ -383,16 +417,30 @@ namespace giac {
 
   template <class T>
   index_t tensor<T>::degree() const {
+#ifdef HAVE_LIBPTHREAD
+    pthread_mutex_lock(&index_degree_mutex);
+#endif
     typename std::vector< monomial<T> >::const_iterator it=this->coord.begin(),it2;
     typename std::vector< monomial<T> >::const_iterator it_end=this->coord.end();
     index_t res(dim);
-    if (!dim) return res;
+    if (!dim) {
+#ifdef HAVE_LIBPTHREAD
+      pthread_mutex_unlock(&index_degree_mutex);
+#endif
+      return res;
+    }
     index_t::iterator itresbeg=res.begin(),itresend=res.end(),itres;
     index_t::const_iterator ittemp,ittemp2,ittempend;
     if (// false &&
 	is_strictly_greater==i_lex_is_strictly_greater){
       for (;it!=it_end;++it){
-	ittemp=it->index.begin();
+        if (it->index.riptr == nullptr) {
+#ifdef HAVE_LIBPTHREAD
+          pthread_mutex_unlock(&index_degree_mutex);
+#endif
+          return res;
+        }
+	ittemp= it->index.begin();
 	for (itres=itresbeg;itres!=itresend;++itres,++ittemp){
 	  if (*itres<*ittemp)
 	    *itres=*ittemp;
@@ -404,7 +452,19 @@ namespace giac {
 	it2=it+(*ittemp); // if dense, point to the last monomial with same x1..xn-1 
 	if (it2->index.back()) // last power in xn must be 0
 	  continue;
-	ittemp=it->index.begin();
+    if (it->index.riptr == nullptr) {
+#ifdef HAVE_LIBPTHREAD
+      pthread_mutex_unlock(&index_degree_mutex);
+#endif
+      return res;
+    }
+	ittemp= it->index.begin();
+  if (it2->index.riptr == nullptr) {
+#ifdef HAVE_LIBPTHREAD
+    pthread_mutex_unlock(&index_degree_mutex);
+#endif
+    return res;
+  }
 	ittemp2=it2->index.begin();
 	ittempend=ittemp+dim-1; // check all other powers
 	for (;ittemp!=ittempend;++ittemp2,++ittemp){
@@ -418,6 +478,12 @@ namespace giac {
     }
     else {
       for (;it!=it_end;++it){
+        if (it->index.riptr == nullptr) {
+#ifdef HAVE_LIBPTHREAD
+          pthread_mutex_unlock(&index_degree_mutex);
+#endif
+          return res;
+        }
 	ittemp=it->index.begin();
 	for (itres=itresbeg;itres!=itresend;++itres,++ittemp){
 	  if (*itres<*ittemp)
@@ -425,6 +491,9 @@ namespace giac {
 	}
       }
     }
+#ifdef HAVE_LIBPTHREAD
+    pthread_mutex_unlock(&index_degree_mutex);
+#endif
     return res;
   }
 

@@ -7118,15 +7118,20 @@ namespace giac {
     }
     vecteur lnew(l);
     int ls=int(l.size());
+    static bool warnfloor=true;
     for (int i=0;i<ls;i++){
       gen tmp;
       if (//l[i].type==_IDNT || lidnt(l[i]).empty()
           has_evalf(l[i],tmp,1,contextptr)
           ){
+        if (warnfloor){
+          *logptr(contextptr) << gettext("Warning: floor value will use approx. evaluation, result might be wrong\n");
+          warnfloor=false;
+        }
 	lnew[i]=tmp;//evalf(l[i],1,contextptr);
 #ifdef HAVE_LIBMPFR
 	if (lnew[i].type==_DOUBLE_){
-          tmp=accurate_evalf(eval(l[i],1,contextptr),100);
+          tmp=eval(accurate_evalf(eval(l[i],1,contextptr),100),1,contextptr);
           if (tmp.type==_REAL)
             lnew[i]=tmp;
         }
@@ -7441,13 +7446,15 @@ namespace giac {
       return apply(args,_is_prime,contextptr);
     if (!is_integral(args))
       return gentypeerr(contextptr);
+    if (args.type!=_INT_){
 #ifdef HAVE_LIBPARI
-    gen res=pari_isprime(args,certif);
-    if (res.type!=_STRNG)
-      return res;
+      gen res=pari_isprime(args,certif);
+      if (res.type!=_STRNG)
+        return res;
 #else
-    if (certif) return gensizeerr("Compile with PARI for prime certificate");
+      if (certif) return gensizeerr("Compile with PARI for prime certificate");
 #endif
+    }
     return is_probab_prime_p(args);
   }
   static const char _is_prime_s []="is_prime";

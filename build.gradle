@@ -246,7 +246,7 @@ def giacSpecificSettings(cppCompiler, linker, targetPlatform) {
         cppCompiler.args '-fno-strict-aliasing' // maybe not needed
         cppCompiler.args '-DPIC' // maybe not needed
         cppCompiler.args '-fpermissive'
-
+        cppCompiler.args '-fPIC'                   
         linker.args '-s' // stripping
 
         // Add libgcc and libstdc++ statically
@@ -412,6 +412,20 @@ model {
                 cppCompiler.executable 'gcc'
                 linker.executable 'gcc'
             }
+
+            target('linux64') {
+                cppCompiler.executable = '/usr/bin/g++-12'
+                cppCompiler.args.addAll([
+                    '-g',                    // ✅ Add debug symbols
+                    '-O0',                   // Disable optimization (no inlining)
+                    '-fno-inline',           // Prevent all inline expansion
+                    '-fvisibility=default',  // Export symbols by default
+                    '-fno-elide-constructors' // Avoid constructor elision
+                ])
+
+                linker.executable = '/usr/bin/g++-12'
+                linker.args.add('-g')        // ✅ Ensure linker retains debug info
+            }
         }
         clang(Clang) {
             target('osx_amd64') {
@@ -515,11 +529,11 @@ model {
         // tommath static lib
         tommath(NativeLibrarySpec) {
             targetPlatform 'ios_arm64'
+            targetPlatform 'linux64'
             targetPlatform 'iphonesimulator_x86_64'
             targetPlatform 'iphonesimulator_arm64'
             targetPlatform 'maccatalyst_x86_64'
             targetPlatform 'maccatalyst_arm64'
-            targetPlatform 'win64'
             if (isMac) {
                 targetPlatform 'osx_amd64'
                 targetPlatform 'osx_arm64'
@@ -548,7 +562,6 @@ model {
             targetPlatform 'iphonesimulator_arm64'
             targetPlatform 'maccatalyst_x86_64'
             targetPlatform 'maccatalyst_arm64'
-            targetPlatform 'win64'
             if (isMac) {
                 targetPlatform 'osx_amd64'
                 targetPlatform 'osx_arm64'
@@ -578,7 +591,7 @@ model {
             targetPlatform 'iphonesimulator_arm64'
             targetPlatform 'maccatalyst_x86_64'
             targetPlatform 'maccatalyst_arm64'
-            targetPlatform 'win64'
+            targetPlatform 'linux64'
 
             binaries.all {
                 lib library: 'giac', linkage: 'static'
@@ -598,8 +611,10 @@ model {
 
             binaries.all {
                 lib library: 'giac', linkage: 'static'
-                linker.args '-lgmp', '-lmpfr', '-lpthread'
+                lib library: 'tommath', linkage: 'static'
+                //linker.args '-lgmp', '-lmpfr', '-lpthread'
                 cppCompiler.define 'GIAC_GGB'
+                linker.args '-lpthread'
                 cppCompiler.define 'IN_GIAC'
                 cppCompiler.define 'GIAC_GENERIC_CONSTANTS'
                 cppCompiler.define 'HAVE_CONFIG_H'
@@ -658,7 +673,6 @@ model {
                 targetPlatform 'osx_amd64'
                 targetPlatform 'osx_arm64'
             }
-            targetPlatform 'win64'
 
             binaries.all {
                 lib library: 'GeoGebraCAS', linkage: 'shared'
@@ -694,7 +708,6 @@ model {
                 targetPlatform 'osx_amd64'
                 targetPlatform 'osx_arm64'
             }
-            targetPlatform 'win64'
 
             sources.cpp {
                 source {
@@ -716,17 +729,6 @@ model {
                     linker.args '-stdlib=libc++', '-lc++'
                     linker.args '-lgmp', '-lmpfr', '-lpthread'
                     linker.args '-L', file("src/jni/prebuilt/osx/${targetPlatform.architecture.name}").toString(), '-dynamiclib'
-                }
-            }
-        }
-    }
-
-     visualStudio {
-        solution {
-            // Add all components of type NativeLibrarySpec to the solution
-            components.withType(NativeLibrarySpec).each { component ->
-            if (component.name in ['giac', 'tommath', 'simpleInterface', 'GeoGebraCASDemo', 'GeoGebraCAS']) { // Filter by name
-                    addProject(component)
                 }
             }
         }
@@ -781,44 +783,6 @@ task installGems(type: Exec, dependsOn: 'configBundle') {
     workingDir rootDir
 }
 
-task createFatIosStaticLibrary_MPFR_GMP(dependsOn: ['simpleInterfaceIosStaticLibrary', 'giacIosStaticLibrary', 'tommathIosStaticLibrary']) {
-    doLast {
-        def output = "${buildDir}/libs/merged"
-        ["arm64"].each {
-            mergeLibraries("Giac", "${output}/ios_${it}", clangIosPath,
-                "${buildDir}/libs/giac/static/ios_${it}/libgiac.a",
-                "${buildDir}/libs/simpleInterface/static/ios_${it}/libSimpleInterface.a",
-                "src/jni/prebuilt/ios/${it}/libgmp.a",
-                "src/jni/prebuilt/ios/${it}/libmpfr.a",
-		"${buildDir}/libs/tommath/static/ios_${it}/libtommath.a")
-        }
-        ["arm64", "x86_64"].each {
-            mergeLibraries("Giac", "${output}/iphonesimulator_${it}", clangIphonesimulatorPath,
-                "${buildDir}/libs/giac/static/iphonesimulator_${it}/libgiac.a",
-                "${buildDir}/libs/simpleInterface/static/iphonesimulator_${it}/libSimpleInterface.a",
-                "src/jni/prebuilt/iphonesimulator/${it}/libgmp.a",
-                "src/jni/prebuilt/iphonesimulator/${it}/libmpfr.a",
-		"${buildDir}/libs/tommath/static/iphonesimulator_${it}/libtommath.a")
-        }
-        ["arm64", "x86_64"].each {
-            mergeLibraries("Giac", "${output}/maccatalyst_${it}", clangIphonesimulatorPath,
-                "${buildDir}/libs/giac/static/maccatalyst_${it}/libgiac.a",
-                "${buildDir}/libs/simpleInterface/static/maccatalyst_${it}/libSimpleInterface.a",
-                "src/jni/prebuilt/maccatalyst/${it}/libgmp.a",
-                "src/jni/prebuilt/maccatalyst/${it}/libmpfr.a",
-		"${buildDir}/libs/tommath/static/maccatalyst_${it}/libtommath.a")
-        }
-
-        lipo("Giac", "${output}/ios", clangIosPath, "${output}/ios_arm64/Giac.a")
-        lipo("Giac", "${output}/iphonesimulator", clangIphonesimulatorPath,
-            "${output}/iphonesimulator_arm64/Giac.a",
-            "${output}/iphonesimulator_x86_64/Giac.a")
-        lipo("Giac", "${output}/maccatalyst", clangIphonesimulatorPath,
-            "${output}/maccatalyst_arm64/Giac.a",
-            "${output}/maccatalyst_x86_64/Giac.a")
-    }
-}
-
 task createFatIosStaticLibrary(dependsOn: ['simpleInterfaceIosStaticLibrary', 'giacIosStaticLibrary', 'tommathIosStaticLibrary']) {
     doLast {
         def output = "${buildDir}/libs/merged"
@@ -851,7 +815,7 @@ task createFatIosStaticLibrary(dependsOn: ['simpleInterfaceIosStaticLibrary', 'g
     }
 }
 
-task createIosFramework(dependsOn: createFatIosStaticLibrary_MPFR_GMP, type: Copy) {
+task createIosFramework(dependsOn: createFatIosStaticLibrary, type: Copy) {
     description "Creates iOS framework"
     from("${buildDir}/libs/merged/ios") {
         include "Giac.a"
@@ -881,7 +845,7 @@ task createIosFramework(dependsOn: createFatIosStaticLibrary_MPFR_GMP, type: Cop
 
 
 
-task createIphonesimulatorFramework(dependsOn: createFatIosStaticLibrary_MPFR_GMP, type: Copy) {
+task createIphonesimulatorFramework(dependsOn: createFatIosStaticLibrary, type: Copy) {
     description "Creates iPhone Simlator framework"
     from("${buildDir}/libs/merged/iphonesimulator") {
         include "Giac.a"
@@ -910,7 +874,7 @@ task createIphonesimulatorFramework(dependsOn: createFatIosStaticLibrary_MPFR_GM
 }
 
 
-task createMaccatalystFramework(dependsOn: createFatIosStaticLibrary_MPFR_GMP, type: Copy) {
+task createMaccatalystFramework(dependsOn: createFatIosStaticLibrary, type: Copy) {
     description "Creates Mac Catalyst framework"
     from("${buildDir}/libs/merged/maccatalyst") {
         include "Giac.a"
@@ -1313,20 +1277,109 @@ task emMakeMpfr {
     }
 }
 
-tasks.register('listComponents') {
-    doLast {
-        println "Available components:"
-        components.each { name, component ->
-            println "- $name"
-        }
-    }
-}
-
 task androidCopyCrystaxSo (dependsOn: 'giac-android:copyCrystaxSo')
 
 task androidAar (dependsOn: ['androidCopyCrystaxSo', 'androidCopyEabiLibjavagiacSo',
                              'androidCopyX86LibjavagiacSo', 'androidCopyX86_64LibjavagiacSo', 'androidCopyArm64LibjavagiacSo', 'giac-android:assemble']) {
     description 'Creates .aar package'
 }
+
+task createLinuxStaticLibrary{
+    description = "Safely combines static .a libraries into one for Linux"
+
+    def outputDir = file("$buildDir/libs/merged/linux_x86_64")
+    def tmpDir = file("$buildDir/tmp/ar_merge_safe")
+    def outputLib = file("$outputDir/libgiac.a")
+
+    def libPaths = [
+        file("$buildDir/libs/tommath/static/linux64/libtommath.a"),
+        file("$buildDir/libs/simpleInterface/static/linux64/libsimpleInterface.a"),
+        file("$buildDir/libs/giac/static/linux64/libgiac.a")
+    ]
+
+    inputs.files libPaths
+    outputs.file outputLib
+
+    doFirst {
+        println "[INFO] Creating output directories"
+        outputDir.mkdirs()
+        tmpDir.mkdirs()
+
+        libPaths.each { lib ->
+            if (!lib.exists()) {
+                throw new GradleException("Missing input library: " + lib.absolutePath)
+            }
+            println "[INFO] Extracting from: ${lib.name}"
+            exec {
+                workingDir tmpDir
+                commandLine 'ar', 'x', lib.absolutePath
+            }
+        }
+
+        println "[INFO] Merging object files..."
+        def objectFiles = fileTree(tmpDir).files*.absolutePath
+        exec {
+            commandLine(['ar', 'rcs', outputLib.absolutePath] + objectFiles)
+        }
+
+        println "[INFO] Running ranlib..."
+        exec {
+            commandLine 'ranlib', outputLib.absolutePath
+        }
+
+        println "[SUCCESS] Created merged static library at: ${outputLib}"
+    }
+}
+
+
+
+task createLinuxSharedLibrary {
+    description = "Creates a single wrapper shared library that links multiple .so files."
+
+    def outputDir = "$buildDir/libs/merged/linux_x86_64"
+    def outputLib = "$outputDir/libgiac_merged.so"
+    def tmpDir = "$buildDir/tmp/wrap_so"
+
+    def so1 = file("$buildDir/libs/tommath/shared/linux64/libtommath.so")
+    def so2 = file("$buildDir/libs/simpleInterface/shared/linux64/libsimpleInterface.so")
+    def so3 = file("$buildDir/libs/giac/shared/linux64/libgiac.so")
+
+    def wrapperCpp = file("$tmpDir/wrapper.cpp")
+
+    inputs.files(so1, so2, so3)
+    outputs.file(outputLib)
+
+    doFirst {
+        mkdir(outputDir)
+        mkdir(tmpDir)
+
+        // Step 1: Create dummy wrapper cpp to force linking
+        wrapperCpp.text = """
+        extern "C" void dummy() {
+            // reference some known symbols to ensure linkage
+            extern void giac_main_symbol();
+            extern void simpleInterface_main_symbol();
+            extern void tommath_main_symbol();
+            giac_main_symbol();
+            simpleInterface_main_symbol();
+            tommath_main_symbol();
+        }
+        """
+
+        // Step 2: Compile & link
+        exec {
+            commandLine 'g++', '-fPIC', '-shared',
+                    wrapperCpp.absolutePath,
+                    '-o', outputLib,
+                    '-L' + so1.parent, '-L' + so2.parent, '-L' + so3.parent,
+                    '-ltommath', '-lsimpleInterface', '-lgiac',
+                    '-Wl,-rpath,' + so1.parent
+        }
+
+        println "[INFO] Wrapper shared library created at: $outputLib"
+    }
+}
+
+
 
 apply from: "deploy.gradle"
