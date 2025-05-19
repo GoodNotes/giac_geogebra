@@ -1,0 +1,8 @@
+module CGiac {
+    umbrella header "GiacBridge.h"
+    module * {
+        export *
+    }
+    link "giac"
+    link "stdc++"
+} 

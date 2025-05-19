@@ -26,6 +26,8 @@ int main(int argc, char *argv[]){
     g=gen(line,&ct);
     try {
       cout << eval(g,1,&ct) << endl;
+      cout << g._VECTptr << endl;
+      cout << g._VECTptr->size() << endl;
       } catch (runtime_error & err) {
       cout << "ERROR: " << err.what() << endl;
       }

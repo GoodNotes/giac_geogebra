@@ -13,5 +13,7 @@ using namespace std;
 
 extern "C" {
     GEOGEBRACAS_API void initializeCAS();
+    GEOGEBRACAS_API void clearContextCAS();
+    GEOGEBRACAS_API void clearGlobalVars();
     GEOGEBRACAS_API string evaluateCAS(string command);
     };
