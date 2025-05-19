@@ -1184,7 +1184,7 @@ namespace giac {
   }
 
   gen::gen(const fraction & p){
-    subtype=0;
+     subtype=0;
     if (is_undef(p.num) || is_undef(p.den)){
       type=_INT_;
       *this=undef;
@@ -1222,7 +1222,7 @@ namespace giac {
   }
 
   gen::gen(Tref_tensor<gen> * pptr){
-#ifdef SMARTPTR64
+ #ifdef SMARTPTR64
     * ((ulonglong * ) this) = ulonglong(pptr) << 16;
 #else
     __POLYptr = pptr ;
@@ -1238,7 +1238,7 @@ namespace giac {
   // WARNING coerce *mptr to an int if possible, in this case delete mptr
   // Pls do not use this constructor unless you know exactly what you do!!
   gen::gen(ref_mpz_t * mptr){
-    int l=mpz_sizeinbase(mptr->z,2);
+     int l=mpz_sizeinbase(mptr->z,2);
     // if (l<17){
     if (l<32){
       type = _INT_;
@@ -1310,7 +1310,7 @@ namespace giac {
   }
 
   gen::gen(const my_mpz& z){
-    int l=mpz_sizeinbase(z.ptr,2);
+     int l=mpz_sizeinbase(z.ptr,2);
     if (l<32){
       type = _INT_;
       val = mpz_get_si(z.ptr);
@@ -1340,7 +1340,7 @@ namespace giac {
   }
 
   gen::gen(const gen & e) { 
-    if (e.type>_DOUBLE_ && e.type!=_FLOAT_
+     if (e.type>_DOUBLE_ && e.type!=_FLOAT_
 #ifndef SMARTPTR64
 	&& e.type!=_FUNC
 #endif
@@ -1385,7 +1385,7 @@ namespace giac {
   }
 
   gen::gen(int a,int b) {
-    subtype=0;
+     subtype=0;
     if (!b){
       type=_INT_;
       val=a;
@@ -1402,13 +1402,13 @@ namespace giac {
   }
 
 #ifndef DOUBLEVAL
-  gen::gen(double d){ 
+  gen::gen(double d){
     opaque_double_copy(&d,this); type=_DOUBLE_; 
   };
 #endif
 
   gen::gen(double a,double b){
-    subtype=0;
+     subtype=0;
     // COUT << a << " " << b << " " << epsilon << '\n';
     if (fabs(b)<1e-12*fabs(a)){ 
 #ifdef DOUBLEVAL
@@ -1467,7 +1467,7 @@ namespace giac {
 #endif
 	  type=_ZINT;
 	  subtype=0;
-	  break; 
+    break; 
 	case _REAL: 
 	  subtype=0;
 #ifdef SMARTPTR64
@@ -1508,7 +1508,7 @@ namespace giac {
     }
   }
   gen::gen(const complex<double> & c) {
-#ifdef SMARTPTR64
+ #ifdef SMARTPTR64
       * ((ulonglong * ) this) = ulonglong(new ref_complex(c)) << 16;
 #else
       __CPLXptr = new ref_complex(c);
@@ -1579,7 +1579,7 @@ namespace giac {
   }
 
   gen::gen(const sparse_poly1 & p){
-    if (p.empty()){
+     if (p.empty()){
       type=0;
       subtype=0;
       val=0;
@@ -1606,7 +1606,7 @@ namespace giac {
   }
 
   gen::gen(const unary_function_ptr * f,int nargs){
-#if defined SMARTPTR64 
+ #if defined SMARTPTR64 
     * ((ulonglong * ) this) = ulonglong(new ref_unary_function_ptr(*f)) << 16;
 #else
     _FUNC_ = (size_t) (* (size_t*) f);
@@ -1617,7 +1617,7 @@ namespace giac {
   }
 
   gen::gen(const unary_function_ptr & f,int nargs){
-#ifdef SMARTPTR64
+ #ifdef SMARTPTR64
     * ((ulonglong * ) this) = ulonglong(new ref_unary_function_ptr(f)) << 16;
 #else
     _FUNC_ = (size_t)(* (size_t *) &f);
@@ -1628,7 +1628,7 @@ namespace giac {
   }
 
   gen::gen(const giac_float & f){
-#ifdef DOUBLEVAL
+ #ifdef DOUBLEVAL
     _FLOAT_val=f;
 #else
 #ifdef BCD
@@ -1657,7 +1657,7 @@ namespace giac {
 #ifdef SMARTPTR64
     case _ZINT: 
       delete (ref_mpz_t *) (* ((ulonglong * ) this) >> 16);
-      break; 
+      break;
     case _REAL:  {
       ref_real_object * ptr=(ref_real_object *) (* ((ulonglong * ) this) >> 16);
 #ifndef NO_RTTI
@@ -1693,6 +1693,7 @@ namespace giac {
       delete (ref_polynome *) (* ((ulonglong * ) this) >> 16);
       break;
     case _FRAC:
+      _FRACptr->den=_FRACptr->num=0;
       delete (ref_fraction *) (* ((ulonglong * ) this) >> 16);
       break;
     case _SPOL1:
@@ -1805,7 +1806,12 @@ namespace giac {
 #if 0 // def COMPILE_FOR_STABILITY // commented (D.Alm) The call to delete_ptr() would sometimes get cancelled if ctrl_c was being set, which could cause the "Stopped by user interruption." exception somehow to be fired twice, with the second time not being caught properly by my exception handling code.
     control_c();
 #endif
-    if (ptr_save && type_save!=_FLOAT_&& ptr_save->ref_count!=-1 && !--(ptr_save->ref_count)){
+    //if (ptr_save && type_save!=_FLOAT_&& ptr_save->ref_count!=-1 && !--(ptr_save->ref_count)){
+    if (ptr_save && type_save!=_FLOAT_&& ptr_save->ref_count!=-1)
+    {
+      int rfcnt = ptr_save->ref_count - 1;
+      --ptr_save->ref_count;
+      if (rfcnt == 0){
       switch (type_save) {
       case _ZINT: 
 	delete ptr_save;
@@ -1885,6 +1891,7 @@ namespace giac {
 #endif
 	;
       }
+    }
     }
   }
 
@@ -2312,6 +2319,7 @@ namespace giac {
 
   bool gen::in_eval(int level,gen & evaled,const context * contextptr) const{
 #ifdef TIMEOUT
+    if (type!=_SYMB || _SYMBptr->sommet!=at_caseval)
     control_c();
 #endif
     if (ctrl_c || interrupted || !stack_check(contextptr)) { 
@@ -6282,7 +6290,8 @@ namespace giac {
 
   static gen operator_times(const gen & a,const gen & b,unsigned t,GIAC_CONTEXT){
     static bool warnpy=true;
-    // COUT << a << "*" << b << '\n';
+    //COUT << a << "*" << b << '\n';
+    //fprintf(stdout, "Multiplication type %d, of poerands %d, %d\n", t, a.type, b.type);
     // if (!( (++control_c_counter) & control_c_counter_mask))
 #ifdef TIMEOUT
     control_c();
@@ -6294,7 +6303,8 @@ namespace giac {
     register ref_mpz_t * e;
     switch (t) {
     case _ZINT__ZINT:
-      e=new ref_mpz_t(GIAC_MPZ_INIT_SIZE); // ((mpz_size(*b._ZINTptr)+mpz_size(*b._ZINTptr))*mp_bits_per_limb);
+    //fprintf(stdout, "zint_zint\n");
+     e=new ref_mpz_t(GIAC_MPZ_INIT_SIZE); // ((mpz_size(*b._ZINTptr)+mpz_size(*b._ZINTptr))*mp_bits_per_limb);
       mpz_mul(e->z,*a._ZINTptr,*b._ZINTptr);
       return e;
     case _DOUBLE___DOUBLE_:
@@ -6302,6 +6312,7 @@ namespace giac {
     case _FLOAT___FLOAT_:
       return a._FLOAT_val*b._FLOAT_val;
     case _INT___ZINT: 
+    //fprintf(stdout, "int_zint\n");
       if (a.val==1) return b;
       e=new ref_mpz_t(GIAC_MPZ_INIT_SIZE); // (mpz_size(*b._ZINTptr)*mp_bits_per_limb);
       if (a.val<0){
@@ -6312,6 +6323,7 @@ namespace giac {
 	mpz_mul_ui(e->z,*b._ZINTptr,a.val);
       return gen(e);
     case _ZINT__INT_:
+    //fprintf(stdout, "zint_int\n");
       if (b.val==1) return a;
       e=new ref_mpz_t(GIAC_MPZ_INIT_SIZE); // (mpz_size(*a._ZINTptr)*mp_bits_per_limb);
       if (b.val<0){
@@ -12191,8 +12203,8 @@ namespace giac {
 	if (!locked)
 	  pthread_mutex_unlock(&mpfr_mutex);
 #else
-	real_object r;
 	mpfr_set_default_prec(nbits);
+	real_object r;
 	int res=mpfr_set_str(r.inf,s,10,MPFR_RNDN);
 #endif // HAVE_LIBPTHREAD
 #else // LIBMPFR
@@ -12626,7 +12638,7 @@ namespace giac {
   */
 
   gen::gen(const wchar_t * ws,GIAC_CONTEXT){
-    size_t l=0;
+     size_t l=0;
     const wchar_t * ptr=ws;
     for (;*ptr;++ptr){ ++l; }
     char * line=new char[4*l+1];
@@ -14508,6 +14520,7 @@ void sprint_double(char * s,double d){
   }
 
   string gen::print(GIAC_CONTEXT) const{
+    //fprintf(stdout, "Type: %d\n", type);
     switch (type ) {
     case _INT_: 
       if (val<0 && val != (1<<31) && calc_mode(contextptr)==38)
@@ -15532,7 +15545,7 @@ void sprint_double(char * s,double d){
   }
 
   gen::gen(const real_interval & g){
-#ifdef SMARTPTR64
+ #ifdef SMARTPTR64
       * ((ulonglong * ) this) = ulonglong(new ref_real_interval) << 16;
 #else
       __REALptr = (ref_real_object *) new ref_real_interval;
