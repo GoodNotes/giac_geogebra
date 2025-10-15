@@ -136,6 +136,9 @@ namespace giac {
     {
     identificateur *tmp = e._IDNTptr;
       if (tmp == nullptr) return;
+      if (tmp->id_name == nullptr) return;
+      // Additional safety check for clearly invalid pointers
+      if ((uintptr_t)tmp->id_name < 0x1000) return; // Catch low memory addresses like 0x2
       if (strcmp(tmp->id_name,string_undef))
 	addtolvar(e,l);}
       return ;
@@ -1012,8 +1015,15 @@ namespace giac {
 	  }
 	}
       }
-      if (!is_one(p1))
-	f.push_back(facteur<polynome>(polynome(p1,1),1));
+      if (!is_one(p1)){
+        if (p1.type==_POLY){
+          factorization fp1=rsqff(*p1._POLYptr);
+          for (int i=0;i<fp1.size();++i)
+            f.push_back(facteur<polynome>(polynome(fp1[i].fact,1),fp1[i].mult));
+        }
+        else
+          f.push_back(facteur<polynome>(polynome(p1,1),1));
+      }
       return f;
     }
     factorization ff(rsqff(s.trunc1()));
@@ -1144,8 +1154,10 @@ namespace giac {
       }
       // Check sign of D
       vecteur Dl(l);
-      if (embeddings && Dl[embeddings].type==_VECT)
-	Dl=*Dl[embeddings]._VECTptr;
+      if (embeddings && Dl[embeddings].type==_VECT){
+        Dl=vecteur(l.begin()+embeddings,l.end());
+	// Dl=*Dl[embeddings]._VECTptr;
+      }
       if (is_positive(r2e(-D,Dl,contextptr),contextptr)){
 	D=-D;
 	if (d%2)
@@ -1831,6 +1843,8 @@ namespace giac {
     iext=makevecteur(1,0,1);
     gen currentext=Extension;
     common_EXT(iext,currentext,0,contextptr);
+    if (iext.type==_VECT)
+      iext=algebraic_EXTension(makevecteur(1,0),iext);
     if (currentext.type==_EXT)
       currentext=*(currentext._EXTptr+1);
     Extension=change_subtype(Extension,_POLY1__VECT);
@@ -3053,8 +3067,14 @@ namespace giac {
   static bool sort_func(const gen & a,const gen & b){
     if (a.type!=b.type)
       return a.type<b.type;
-    if (a.type==_IDNT)
+    if (a.type==_IDNT){
+      bool a_valid = a._IDNTptr->id_name && (uintptr_t)a._IDNTptr->id_name >= 0x1000;
+      bool b_valid = b._IDNTptr->id_name && (uintptr_t)b._IDNTptr->id_name >= 0x1000;
+      if (!a_valid && !b_valid) return false;
+      if (!a_valid) return true;
+      if (!b_valid) return false;
       return strcmp(a._IDNTptr->id_name,b._IDNTptr->id_name)<0;
+    }
     if (a.type==_SYMB){
       int cmp=strcmp(a._SYMBptr->sommet.ptr()->s,b._SYMBptr->sommet.ptr()->s);
       if (cmp) return cmp<0;
@@ -3064,8 +3084,14 @@ namespace giac {
   static bool sort_func2(const gen & a,const gen & b){
     if (a.type!=b.type)
       return a.type<b.type;
-    if (a.type==_IDNT)
+    if (a.type==_IDNT){
+      bool a_valid = a._IDNTptr->id_name && (uintptr_t)a._IDNTptr->id_name >= 0x1000;
+      bool b_valid = b._IDNTptr->id_name && (uintptr_t)b._IDNTptr->id_name >= 0x1000;
+      if (!a_valid && !b_valid) return false;
+      if (!a_valid) return true;
+      if (!b_valid) return false;
       return strcmp(a._IDNTptr->id_name,b._IDNTptr->id_name)<0;
+    }
     if (a.type==_SYMB){
       int at=taille(a,256),bt=taille(b,256);
       if (at!=bt)
@@ -4667,6 +4693,37 @@ namespace giac {
         if (cplxv)
           base=subst(base,cst_i,x0,true,contextptr);
         syst.push_back(symb_pow(vars[i],d)-pow(base,num,contextptr));
+        // if gg is not irreducible, select the right factor
+        gen vi=_evalf(makesequence(v[i],extpar.digits),contextptr);
+        if (vi.type<_IDNT){
+          gen ggf=_factors(gg,contextptr);
+          if (ggf.type==_VECT && ggf._VECTptr->size()>2){
+            vecteur & ggl=*ggf._VECTptr;
+            gen oldP=ggl[0],oldval=abs(_horner(makesequence(oldP,vi,vx_var),contextptr),contextptr);
+            for (int i=2;i<ggl.size();i+=2){
+              gen curP=ggl[i],curval=abs(_horner(makesequence(curP,vi,vx_var),contextptr),contextptr);
+              if (is_greater(oldval,curval,contextptr)){
+                oldval=curval;
+                oldP=curP;
+              }
+            }
+            gg=oldP;
+            vecteur PV=gen2vecteur(_coeff(makesequence(oldP,vx_var),contextptr));
+            if (PV.size()>=2){
+              int I=1;
+              for (;I<PV.size()-1;++I){
+                if (!is_exactly_zero(PV[I]))
+                  break;
+              }
+              if (I==PV.size()-1)
+                v[i]=pow(-PV[I]/PV[0],inv(I,contextptr),contextptr);
+            }
+            oldP=subst(oldP,vx_var,vars[i],false,contextptr);
+            syst.back()=subst(oldP,V,VARS,false,contextptr);
+            if (cplxv)
+              syst.back()=subst(syst.back(),cst_i,x0,true,contextptr);              
+          }
+        }
       }
       else {
         debug_infolevel=dbg;
@@ -5419,8 +5476,31 @@ namespace giac {
 	    tmp=-vtmp.back()/vtmp.front();
 	  *it=pow(base,num.val/den.val,contextptr)*tmp;
 	}
-	else
-	  *it= pow(base, num.val /den.val,contextptr) *pow(base,rdiv(num.val%den.val,den),contextptr);
+	else {
+          // extract from the root before pow
+          gen base1=1,base2=1;
+          if (den.val==1)
+            base2=base;
+          else {
+            gen fbase=_factors(base,contextptr);
+            if (fbase.type==_VECT){
+              vecteur v=*fbase._VECTptr;
+              for (int i=0;i<v.size();i+=2){
+                int mult=v[i+1].val;
+                if (mult%den.val==0){
+                  if (den.val%2==0 && is_real(v[i],contextptr))
+                    v[i]=abs(v[i],contextptr);
+                  base1=base1*pow(v[i],mult*num.val/den.val,contextptr);
+                }
+                else
+                  base2=base2*pow(v[i],mult,contextptr);
+              }
+            }
+            else
+              base2=base;
+          }
+          *it= base1*pow(base2,num.val/den.val,contextptr)*pow(base2,rdiv(num.val%den.val,den),contextptr);
+        }
       }
     }
     if (l!=l_subst) 

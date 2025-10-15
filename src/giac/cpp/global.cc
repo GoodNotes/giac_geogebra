@@ -238,7 +238,7 @@ int ctrl_c_interrupted(int exception){
   if (!giac::ctrl_c && !giac::interrupted)
     return 0;
   giac::ctrl_c=giac::interrupted=0;
-#ifndef NO_STD_EXCEPT
+#ifndef NO_STDEXCEPT
   if (exception)
     giac::setsizeerr("Interrupted");
 #endif
@@ -5087,14 +5087,16 @@ extern "C" void Sleep(unsigned int miliSecond);
     if (file.size()>4 && file.substr(0,4)!="http" && file.substr(0,4)!="file" && file.substr(0,4)!="mail"){
       if (res[0]!='/')
 	res=giac_aide_dir()+res;
-      // Remove # trailing part of URL
-      int ss=int(res.size());
-      for (--ss;ss>0;--ss){
-	if (res[ss]=='#' || res[ss]=='.' || res[ss]=='/' )
-	  break;
+      if (file.substr(0,4)!="xcas" && file.substr(0,8)!="doc/xcas"){
+        // Remove # trailing part of URL
+        int ss=int(res.size());
+        for (--ss;ss>0;--ss){
+          if (res[ss]=='#' || res[ss]=='.' || res[ss]=='/' )
+            break;
+        }
+        if (ss && res[ss]!='.')
+          res=res.substr(0,ss);
       }
-      if (ss && res[ss]!='.')
-	res=res.substr(0,ss);
       CERR << res << '\n';
 #if !defined VISUALC && !defined __MINGW_H && !defined NSPIRE && !defined FXCG
       /* If we have a POSIX path list, convert to win32 path list */
@@ -5473,6 +5475,8 @@ NULL,NULL,SW_SHOWNORMAL);
       }
 #endif
     }
+    if (debug_infolevel)
+      cout << "LANG " << s << "\n";
     if (s.size()>=2){
       s=s.substr(0,2);
       int i=string2lang(s);

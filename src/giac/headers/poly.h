@@ -314,7 +314,11 @@ namespace giac {
   template <class T>
   int tensor<T>::lexsorted_degree() const{ 
 #ifdef HAVE_LIBPTHREAD
-    pthread_mutex_lock(&lxsrtdeg_mutex);
+    int lock_result = pthread_mutex_lock(&lxsrtdeg_mutex);
+    if (lock_result != 0) {
+        CERR << "Failed to acquire lxsrtdeg_mutex lock" << '\n';
+        return 0;
+    }
 #endif
     if (!dim){
 #ifdef HAVE_LIBPTHREAD

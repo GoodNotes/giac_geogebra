@@ -1,4 +1,6 @@
 #include "GeoGebraCAS.h"
+//#include "ContextBridge.hpp"
+#include "GenBridge.hpp"
 #include <stdexcept>
 #include <giac.h>
 
@@ -22,7 +24,10 @@ extern "C" {
     EXPORT string evaluateCAS(string command) {
         gen e(string(command), &ct);
         try {
-            return giac::print(giac::eval(e, &ct), &ct);
+            //ContextBridge *cb = new ContextBridge();
+            //GenBridge* gb = new GenBridge(command, *cb);
+            //return gb->eval(1, *cb)->print(*cb);
+            return giac::print(giac::eval(e, 1, &ct), &ct);
             } catch (std::runtime_error & err) {
             cerr << err.what() << endl;
             }

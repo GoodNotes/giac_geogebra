@@ -1084,7 +1084,9 @@ namespace giac {
     {"_PSun_", 0, "puissance du Soleil", 0, 0, CAT_CATEGORY_PHYS | XCAS_ONLY},
     {"_Pa", 0, "Pression en Pascal=kg/m/s^2", 0, 0, CAT_CATEGORY_UNIT | XCAS_ONLY},
     {"_REarth_", 0, "Rayon de la Terre", 0, 0, CAT_CATEGORY_PHYS | XCAS_ONLY},
+#ifndef NUMWORKS_SLOTB
     {"_RSun_", 0, "rayon du Soleil", 0, 0, CAT_CATEGORY_PHYS | XCAS_ONLY},
+#endif
     {"_R_", 0, "constante des gaz (de Boltzmann par mole)", 0, 0, CAT_CATEGORY_PHYS | XCAS_ONLY},
     {"_S", 0, "", 0, 0, CAT_CATEGORY_UNIT | XCAS_ONLY},
     {"_StdP_", 0, "Pression standard (au niveau de la mer)", 0, 0, CAT_CATEGORY_PHYS | XCAS_ONLY},
@@ -1098,7 +1100,9 @@ namespace giac {
     {"_alpha_", 0, "constante de structure fine", 0, 0, CAT_CATEGORY_PHYS | XCAS_ONLY},
     {"_c_", 0, "vitesse de la lumiere", 0, 0, CAT_CATEGORY_PHYS | XCAS_ONLY},
     {"_cd", 0, "Luminosite en candela", 0, 0, CAT_CATEGORY_UNIT | XCAS_ONLY},
+#ifndef NUMWORKS_SLOTB
     {"_cdf", "_cdf", "Suffixe de distribution cumulee. Taper F2 pour la distribution cumulee inverse.", "#_icdf", 0, CAT_CATEGORY_PROBA|XCAS_ONLY},
+#endif
     {"_d", 0, "Temps: jour", 0, 0, CAT_CATEGORY_UNIT | XCAS_ONLY},
     {"_deg", 0, "Angle en degres", 0, 0, CAT_CATEGORY_UNIT | XCAS_ONLY},
     {"_eV", 0, "Energie en electron-Volt", 0, 0, CAT_CATEGORY_UNIT | XCAS_ONLY},
@@ -1116,7 +1120,9 @@ namespace giac {
     {"_kg", 0, "Masse en kilogramme", 0, 0, CAT_CATEGORY_UNIT | XCAS_ONLY},
     {"_l", 0, "Volume en litre", 0, 0, CAT_CATEGORY_UNIT | XCAS_ONLY},
     {"_m", 0, "Longueur en metre", 0, 0, CAT_CATEGORY_UNIT | XCAS_ONLY},
+#ifndef NUMWORKS_SLOTB
     {"_mEarth_", 0, "masse de la Terre", 0, 0, CAT_CATEGORY_PHYS | XCAS_ONLY},
+#endif
     {"_m^2", 0, "Aire en m^2", 0, 0, CAT_CATEGORY_UNIT | XCAS_ONLY},
     {"_m^3", 0, "Volume en m^3", 0, 0, CAT_CATEGORY_UNIT | XCAS_ONLY},
     {"_me_", 0, "masse electron", 0, 0, CAT_CATEGORY_PHYS | XCAS_ONLY},
@@ -1126,7 +1132,9 @@ namespace giac {
     {"_mpme_", 0, "ratio de masse proton/electron", 0, 0, CAT_CATEGORY_PHYS | XCAS_ONLY},
     {"_mu0_", 0, "permeabilite du vide", 0, 0, CAT_CATEGORY_PHYS | XCAS_ONLY},
     {"_phi_", 0, "quantum flux magnetique", 0, 0, CAT_CATEGORY_PHYS | XCAS_ONLY},
+#ifndef NUMWORKS_SLOTB
     {"_plot", "_plot", "Suffixe pour graphe d'une regression.", "#X,Y:=[1,2,3,4,5],[0,1,3,4,4];polynomial_regression_plot(X,Y,2);scatterplot(X,Y)", 0, CAT_CATEGORY_STATS| XCAS_ONLY},
+#endif
     {"_qe_", 0, "charge de l'electron", 0, 0, CAT_CATEGORY_PHYS | XCAS_ONLY},
     {"_qme_", 0, "_q_/_me_", 0, 0, CAT_CATEGORY_PHYS | XCAS_ONLY},
     {"_rad", 0, "Angle en radians", 0, 0, CAT_CATEGORY_UNIT | XCAS_ONLY},
@@ -1233,6 +1241,7 @@ namespace giac {
     {"floor(x)", 0, "Partie entiere de x", "pi", 0, CAT_CATEGORY_REAL},
     {"fonction f(x)", "fonction", "Definition de fonction (Xcas). Par exemple\nfonction f(x)\n local y;\ny:=x*x;\nreturn y;\nffonction", 0, 0, CAT_CATEGORY_PROG | XCAS_ONLY},
     {"frenet([x(t),y(t)],t,t0)", 0, "Courbure, centre de courbure et repere de Frenet de la courbe parametree [x(t),y(t)] en t0", "[t,t^2],t,1", "[t,t^2],t", CAT_CATEGORY_CALCULUS | (CAT_CATEGORY_2D << 8) | XCAS_ONLY},
+#ifndef NUMWORKS_SLOTB
     {"from arit import *", "from arit import *", "Instruction pour utiliser les fonctions d'arithmetique entiere en Python", "#from arit import *", "#import arit", CAT_CATEGORY_ARIT},
     {"from cas import *", "from cas import *", "Permet d'utiliser le calcul formel depuis Python", "#from cas import *", "#import cas", CAT_CATEGORY_ALGEBRA|(CAT_CATEGORY_CALCULUS<<8)},
     {"from cmath import *", "from cmath import *", "Instruction pour utiliser les fonctions de maths sur les complexes (trigo, exponentielle, log, ...) en Python", "#from cmath import *;i=1j", "#import cmath", CAT_CATEGORY_COMPLEXNUM},
@@ -1242,6 +1251,7 @@ namespace giac {
     {"from matplotl import *", "from matplotl import *", "Instruction pour utiliser les fonctions de trace en Python", "#from matplotl import *", "#import matplotl", CAT_CATEGORY_PROBA|(CAT_CATEGORY_PLOT <<8)|(CAT_CATEGORY_STATS<<16)},
     {"from random import *", "from random import *", "Instruction pour utiliser les fonctions aleatoires en Python", "#from random import *", "#import random", CAT_CATEGORY_PROBA},
     {"from turtle import *", "from turtle import *", "Instruction pour utiliser la tortue en Python", "#from turtle import *", "#import turtle", CAT_CATEGORY_LOGO},
+#endif
     {"fsolve(equation,x=a[..b])", 0, "Resolution approchee de equation pour x dans l'intervalle a..b ou en partant de x=a.","cos(x)=x,x=0..1", "cos(x)-x,x=0.0", CAT_CATEGORY_SOLVE | XCAS_ONLY},
     {"gauss(q)", 0, "Reduction de Gauss d'une forme quadratique q", "x^2+x*y+x*z,[x,y,z]", "x^2+4*x*y,[]", CAT_CATEGORY_LINALG | XCAS_ONLY },
     {"gcd(a,b,...)", 0, "Plus grand commun diviseur. En Python ne fonctionne qu'avec des entiers. Voir iegcd ou egcd pour Bezout.", "23,13", "x^2-1,x^3-1", CAT_CATEGORY_ARIT | (CAT_CATEGORY_POLYNOMIAL << 8)},
@@ -1520,7 +1530,9 @@ const catalogFunc completeCaten[] = { // list of all functions (including some n
     {"_alpha_", 0, "fine structure constant", 0, 0, CAT_CATEGORY_PHYS | XCAS_ONLY},
     {"_c_", 0, "speed of light", 0, 0, CAT_CATEGORY_PHYS | XCAS_ONLY},
     {"_cd", 0, "candela", 0, 0, CAT_CATEGORY_UNIT | XCAS_ONLY},
+#ifndef NUMWORKS_SLOTB
   {"_cdf", "_cdf", "Suffix to get a cumulative distribution function. Type F2 for inverse cumulative distribution function _icdf suffix.", "#_icdf", 0, CAT_CATEGORY_PROBA|XCAS_ONLY},
+#endif
     {"_d", 0, "day", 0, 0, CAT_CATEGORY_UNIT | XCAS_ONLY},
     {"_deg", 0, "degree", 0, 0, CAT_CATEGORY_UNIT | XCAS_ONLY},
     {"_eV", 0, "electron-Volt", 0, 0, CAT_CATEGORY_UNIT | XCAS_ONLY},
@@ -1548,7 +1560,9 @@ const catalogFunc completeCaten[] = { // list of all functions (including some n
     {"_mpme_", 0, "proton/electron mass-ratio", 0, 0, CAT_CATEGORY_PHYS | XCAS_ONLY},
     {"_mu0_", 0, "", 0, 0, CAT_CATEGORY_PHYS | XCAS_ONLY},
     {"_phi_", 0, "magnetic flux quantum", 0, 0, CAT_CATEGORY_PHYS | XCAS_ONLY},
+#ifndef NUMWORKS_SLOTB
     {"_plot", "_plot", "Suffix for a regression graph.", "#X,Y:=[1,2,3,4,5],[0,1,3,4,4];polynomial_regression_plot(X,Y,2);scatterplot(X,Y)", 0, CAT_CATEGORY_STATS},
+#endif
     {"_qe_", 0, "electron charge", 0, 0, CAT_CATEGORY_PHYS | XCAS_ONLY},
     {"_qme_", 0, "_q_/_me_", 0, 0, CAT_CATEGORY_PHYS | XCAS_ONLY},
     {"_rad", 0, "radians", 0, 0, CAT_CATEGORY_UNIT | XCAS_ONLY},
@@ -1653,7 +1667,9 @@ const catalogFunc completeCaten[] = { // list of all functions (including some n
   {"fourier_an(f,x,T,n,a)", 0, "Cosine Fourier coefficients of f", "x^2,x,2*pi,n,-pi", 0, CAT_CATEGORY_CALCULUS},
   {"fourier_bn(f,x,T,n,a)", 0, "Sine Fourier coefficients of f", "x^2,x,2*pi,n,-pi", 0, CAT_CATEGORY_CALCULUS},
   {"fourier_cn(f,x,T,n,a)", 0, "Exponential Fourier coefficients of f", "x^2,x,2*pi,n,-pi", 0, CAT_CATEGORY_CALCULUS},
+#ifndef NUMWORKS_SLOTB
   {"from math/... import *", "from math import *", "Access to math or to random functions ([random]) or turtle with English commandnames [turtle]. Math import is not required in KhiCAS", "#from random import *", "#from turtle import *", CAT_CATEGORY_PROG},
+#endif
   {"fsolve(equation,x=a..b)", 0, "Approx equation solving in interval a..b.","cos(x)=x,x=0..1", "cos(x)-x,x=0.0", CAT_CATEGORY_SOLVE},
   // {"function f(x):...", "function f(x) local y;   ffunction:;", "Function definition.", "#function f(x) local y; y:=x^2; return y; ffunction:;", 0, CAT_CATEGORY_PROG},
   {"gauss(q)", 0, "Quadratic form reduction", "x^2+x*y+x*z+y^2+z^2,[x,y,z]", 0, CAT_CATEGORY_LINALG},
@@ -1847,8 +1863,12 @@ const catalogFunc completeCaten[] = { // list of all functions (including some n
 
   const char aide_khicas_string[]="Aide Khicas";
 #ifdef NUMWORKS
+#ifdef NUMWORKS_SLOTB
+  const char shortcuts_en_string[]="";
+#else
   const char shortcuts_fr_string[]="Raccourcis clavier (shell et editeur)\nshift-/: %\nalpha shift \": '\nshift--: \\\nshift-+: completion\nshift-1 a 6: selon bandeau en bas\nshift-7: matrices\nshift-8: complexes\nshift-9:arithmetique entiere\nshift-0: probas\nshift-.: reels\nshift-10^: polynomes\nvar: liste des variables\nans: figure tortue (editeur)\n\nshift-x^y (sto) renvoie =>\n=>+: partfrac\n=>*: factor\n=>sin/cos/tan\n=>=>: solve\n\nShell:\nshift-5: Editeur 2d ou graphique ou texte selon objet\nshift-6: editeur texte\n+ ou - modifie un parametre en surbrillance\n\nEditeur d'expressions\nshift-cut: defaire/refaire (1 fois)\npave directionnel: deplace la selection dans l'arborescence de l'expression\nshift-droit/gauche echange selection avec argument a droite ou a gauche\nalpha-droit/gauche dans une somme ou un produit: augmente la selection avec argument droit ou gauche\nshift-4: Editer selection, shift-5: taille police + ou - grande\nEXE: evaluer la selection\nshift-6: valeur approchee\nBackspace: supprime l'operateur racine de la selection\n\nEditeur de scripts\nEXE: passage a la ligne\nshift-CUT: documentation\nshift COPY (ou shift et deplacement curseur simultanement): marque le debut de la selection, deplacer le curseur vers la fin puis Backspace pour effacer ou shift-COPY pour copier sans effacer. shift-PASTE pour coller.\nHome-6 recherche seule: entrer un mot puis EXE puis EXE. Taper EXE pour l'occurence suivante, Back pour annuler.\nHome-6 remplacer: entrer un mot puis EXE puis le remplacement et EXE. Taper EXE ou Back pour remplacer ou non et passer a l'occurence suivante, AC pour annuler\nOK: tester syntaxe\n\nRaccourcis Graphes:\n+ - zoom\n(-): zoomout selon y\n*: autoscale\n/: orthonormalisation\nOPTN: axes on/off";
   const char shortcuts_en_string[]="Keyboard shortcuts (shell and editor)\nshift-/: %\nalpha shift \": '\nshift--: \\\nshift-+: completion\nshift-1 to 6: cf. screen bottom\nshift-7: matrices\nshift-8: complexes\nshift-9:arithmetic\nshift-0: proba\nshift-.: reals\nshift-10^: polynomials\nvar: variables list\nans: turtle screen (editor)\n\nshift-x^y (sto) returns =>\n=>+: partfrac\n=>*: factor\n=>sin/cos/tan\n=>=>: solve\n\nShell:\nshift-5: 2d editor or graph or text\nshift-6: text edit\n+ ou - modifies selected slider\n\nExpressions editor\nshift-cut: undo/redo (1 fois)\nkeypad: move selection inside expression tree\nshift-right/left exchange selection with right or left argument\nalpha-right/left: inside a sum or product: increase selection with right or left argument\nshift-4: Edit selection, shift-5: change fontsize\nEXE: eval selection\nshift-6: approx value\nBackspace: suppress selection's rootnode operator\n\nScript Editor\nEXE: newline\nshift-CUT: documentation\nshift-COPY: marks selection begin, move the cursor to the end, then hit Backspace to erase or shift-COPY to copy (no erase). shift-PASTE to paste.\nHome-6 search: enter a word then EXE then again EXE. Type EXE for next occurence, Back to cancel.\nHome-6 replace: enter a word then EXE then replacement word then EXE. Type EXE or Back to replace or ignore and go to next occurence, AC to cancel\nOK: test syntax\n\nGraph shortcuts:\n+ - zoom\n(-): zoomout along y\n*: autoscale\n/: orthonormalization\nOPTN: axes on/off";
+#endif
 #else
   const char shortcuts_fr_string[]="Raccourcis clavier (shell et editeur)\nlivre: aide/complete\ntab: complete (shell)/indente (editeur)\nshift-/: %\nshift *: '\nctrl-/: \\\nshift-1 a 6: selon bandeau en bas\nshift-7: matrices\nshift-8: complexes\nshift-9:arithmetique\nshift-0: probas\nshift-.: reels\nctrl P: programme\nvar: liste des variables\nans (shift (-)): figure tortue (editeur)\n\nctrl-var (sto) renvoie =>\n=>+: partfrac\n=>*: factor\n=>sin/cos/tan\n=>=>: solve\n\nShell:\nshift-5: Editeur 2d ou graphique ou texte selon objet\nshift-4: editeur texte\n+ ou - modifie un parametre en surbrillance\n\nEditeur d'expressions\nctrl z: defaire/refaire (1 fois)\npave directionnel: deplace la selection dans l'arborescence de l'expression\nshift-droit/gauche echange selection avec argument a droite ou a gauche\nctrl droit/gauche dans une somme ou un produit: augmente la selection avec argument droit ou gauche\nshift-4: Editer selection, shift-5: taille police + ou - grande\nenter: evaluer la selection\nshift-6: valeur approchee\nDel: supprime l'operateur racine de la selection\n\nEditeur de scripts\nenter: passage a la ligne\nctrl z: defaire/refaire (1 fois)\nctrl c ou shift et touche curseur simultanement: marque le debut de la selection, deplacer le curseur vers la fin puis Del pour effacer ou ctrl c pour copier sans effacer. ctrl v pour coller.\ndoc-6 recherche seule: entrer un mot puis enter puis enter. Taper enter pour l'occurence suivante, esc pour annuler.\ndoc-6 remplacer: entrer un mot puis enter puis le remplacement et enter. Taper enter ou esc pour remplacer ou non et passer a l'occurence suivante, ctrl del pour annuler\nvalidation (a droite de U): tester syntaxe\n\nRaccourcis Graphes:\n+ - zoom\n(-): zoomout selon y\n*: autoscale\n/: orthonormalisation\nOPTN: axes on/off";
   const char shortcuts_en_string[]="Keyboard shortcuts (shell and editor)\nbook: help or completion\ntab: completion (shell), indent (editor)\nshift-/: %\nalpha shift *: '\nctrl-/: \\\nshift-1 a 6: see at bottom\nshift-7: matrices\nshift-8: complexes\nshift-9:arithmetic\nshift-0: probas\nshift-.: reals\nctrl P: program\nvar: variables list\n ans (shift (-)): turtle screen (editor)\n\nctrl var (sto) returns =>\n=>+: partfrac\n=>*: factor\n=>sin/cos/tan\n=>=>: solve\n\nShell:\nshift-5: 2d editor or graph or text\nshift-4: text edit\n+ ou - modifies selected slider\n\nExpressions editor\nctrl z: undo/redo (1 fois)\nkeypad: move selection inside expression tree\nshift-right/left exchange selection with right or left argument\nalpha-right/left: inside a sum or product: increase selection with right or left argument\nshift-4: Edit selection, shift-5: change fontsize\nenter: eval selection\nshift-6: approx value\nDel: suppress selection's rootnode operator\n\nScript Editor\nenter: newline\nctrl z: undo/redo (1 time)\nctrl c or shift + cursor key simultaneously: marks selection begin, move the cursor to the end, then hit Del to erase or ctrl c to copy (no erase). ctrl v to paste.\ndoc-6 search: enter a word then enter then again enter. Type enter for next occurence, esc to cancel.\ndoc-6 replace: enter a word then enter then replacement word then enter. Type enter or esc to replace or ignore and go to next occurence, AC to cancel\nOK: test syntax\n\nGraph shortcuts:\n+ - zoom\n(-): zoomout along y\n*: autoscale\n/: orthonormalization\nOPTN: axes on/off";
@@ -5398,18 +5418,20 @@ string longhelp(const char * s){
       return "sqrt(";
     case KEY_CHAR_SQUARE:
       return py?"**2":"^2";
-    case KEY_CHAR_CUBEROOT:
-      return py?"**(1/3)":"^(1/3)";
     case KEY_CHAR_POWROOT:
       return py?"**(1/":"^(1/";
     case KEY_CHAR_RECIP:
       return py?"**-1":"^-1";
+#ifndef NUMWORKS
+    case KEY_CHAR_CUBEROOT:
+      return py?"**(1/3)":"^(1/3)";
     case KEY_CHAR_THETA:
       return "arg(";
     case KEY_CHAR_VALR:
       return "abs(";
     case KEY_CHAR_ANGLE:
       return "polar_complex(";
+#endif
     case KEY_CTRL_XTT:
       return xthetat?"t":"x";
     case KEY_CHAR_LN:
@@ -5432,6 +5454,7 @@ string longhelp(const char * s){
       return "acos(";
     case KEY_CHAR_ATAN:
       return "atan(";
+#ifndef NUMWORKS
     case KEY_CTRL_MIXEDFRAC:
       return "limit(";
     case KEY_CTRL_FRACCNVRT:
@@ -5439,6 +5462,7 @@ string longhelp(const char * s){
       // case KEY_CTRL_FORMAT: return "purge(";
     case KEY_CTRL_FD:
       return "approx(";
+#endif
     case KEY_CHAR_STORE:
       // if (keyflag==1) return "inf";
       return "=>";
@@ -12852,7 +12876,7 @@ namespace xcas {
     G=remove_at_pnt(G);
     tracemode_disp.clear();
     string curve_infos1,curve_infos2;
-    gen parameq,x,y,t,tmin,tmax,tstep;
+    gen parameq,x,y,t,tmin,tmax,tstep,x0g("x0",contextptr),y0g("y0",contextptr),x1g("x1",contextptr),y1g("y1",contextptr),x2g("x2",contextptr);
     // extract position at tracemode_i
     if (G.is_symb_of_sommet(at_curve)&& symb_depth(G._SYMBptr->feuille[0][0],0,tracemaxdepth)<tracemaxdepth){
       gen c=G._SYMBptr->feuille[0];
@@ -12867,11 +12891,11 @@ namespace xcas {
       gen x2=derive(x1,t,contextptr);
       gen y1=derive(y,t,contextptr);
       gen y2=derive(y1,t,contextptr);
-      sto(x,gen("x0",contextptr),contextptr);
-      sto(x1,gen("x1",contextptr),contextptr);
-      sto(x2,gen("x2",contextptr),contextptr);
-      sto(y,gen("y0",contextptr),contextptr);
-      sto(y1,gen("y1",contextptr),contextptr);
+      sto(x,x0g,contextptr);
+      sto(x1,x1g,contextptr);
+      sto(x2,x2g,contextptr);
+      sto(y,y0g,contextptr);
+      sto(y1,y1g,contextptr);
       sto(y2,gen("y2",contextptr),contextptr);
       tmin=c[2];
       tmax=c[3];
@@ -13021,8 +13045,13 @@ namespace xcas {
       }
       G=G._SYMBptr->feuille[0];
     }
+    bool implicit=false;
     if (G.type==_VECT){
       vecteur & v=*G._VECTptr;
+      if (v.size()>16){
+        gen x2(x2g.eval(1,contextptr));
+        implicit=x2.type==_STRNG && *x2._STRNGptr=="implicit";
+      }
       if (operation==-1 && curve_infos1.size()==0){
 	if (v.size()==2)
 	  curve_infos1=_equation(G_orig,contextptr).print(contextptr);
@@ -13180,6 +13209,21 @@ namespace xcas {
     tracemode_add="";
     if (Gx.type==_DOUBLE_ && Gy.type==_DOUBLE_){
       tracemode_add += "x="+print_DOUBLE_(Gx._DOUBLE_val,3)+",y="+print_DOUBLE_(Gy._DOUBLE_val,3);
+      if (implicit){
+        sto(Gx,x0g,contextptr);
+        sto(Gy,y0g,contextptr);
+        gen m(gen(makevecteur(x1g,y1g)).eval(1,contextptr));
+        m=subst(m,makevecteur(x__IDNT_e,y__IDNT_e),makevecteur(Gx,Gy),false,contextptr);
+        m=evalf_double(m,1,contextptr);
+        m=_normalize(m,contextptr);
+        gen T(_droite(makesequence(_point(G,contextptr),_point(G+m[0]+cst_i*m[1],contextptr)),contextptr));
+        m=m[1]/m[0];
+        if (m.type==_DOUBLE_){
+          tracemode_add += " ,m="+giac::print_DOUBLE_(m._DOUBLE_val,3);
+          tracemode_disp.push_back(T);
+        }
+      }
+      
       if (tstep!=0){
 	gen curt=tmin+tracemode_i*tstep;
 	if (curt.type==_DOUBLE_){
@@ -13190,30 +13234,32 @@ namespace xcas {
             G=subst(parameq,t,curt,false,contextptr);
 	    gen G1=derive(parameq,t,contextptr);
 	    gen G1t=subst(G1,t,curt,false,contextptr);
-	    gen G1x,G1y; reim(G1t,G1x,G1y,contextptr);
-	    gen m=evalf_double(G1y/G1x,1,contextptr);
-	    if (m.type==_DOUBLE_)
-	      tracemode_add += ", m="+print_DOUBLE_(m._DOUBLE_val,3);
-	    gen T(_vector(makesequence(_point(G,contextptr),_point(G+G1t,contextptr)),contextptr));
-	    tracemode_disp.push_back(T);
-	    gen G2(derive(G1,t,contextptr));
-	    gen G2t=subst(G2,t,curt,false,contextptr);
-	    gen G2x,G2y; reim(G2t,G2x,G2y,contextptr);
-	    gen det(G1x*G2y-G2x*G1y);
-	    gen Tn=sqrt(G1x*G1x+G1y*G1y,contextptr);
-	    gen R=evalf_double(Tn*Tn*Tn/det,1,contextptr);
-	    gen centre=G+R*(-G1y+cst_i*G1x)/Tn;
-	    if (tracemode & 4){
-	      gen N(_vector(makesequence(_point(G,contextptr),_point(centre,contextptr)),contextptr));
-	      tracemode_disp.push_back(N);
-	    }
-	    if (tracemode & 8){
-	      if (R.type==_DOUBLE_)
-		tracemode_add += ", R="+print_DOUBLE_(R._DOUBLE_val,3);
-	      tracemode_disp.push_back(_cercle(makesequence(centre,R),contextptr));
-	    }
-	  }
-	}
+            if (!is_undef(G1t) && !is_inf(G1t)){
+              gen G1x,G1y; reim(G1t,G1x,G1y,contextptr);
+              gen m=evalf_double(G1y/G1x,1,contextptr);
+              if (m.type==_DOUBLE_)
+                tracemode_add += ", m="+print_DOUBLE_(m._DOUBLE_val,3);
+              gen T(_vector(makesequence(_point(G,contextptr),_point(G+G1t,contextptr)),contextptr));
+              tracemode_disp.push_back(T);
+              gen G2(derive(G1,t,contextptr));
+              gen G2t=subst(G2,t,curt,false,contextptr);
+              gen G2x,G2y; reim(G2t,G2x,G2y,contextptr);
+              gen det(G1x*G2y-G2x*G1y);
+              gen Tn=sqrt(G1x*G1x+G1y*G1y,contextptr);
+              gen R=evalf_double(Tn*Tn*Tn/det,1,contextptr);
+              gen centre=G+R*(-G1y+cst_i*G1x)/Tn;
+              if (tracemode & 4){
+                gen N(_vector(makesequence(_point(G,contextptr),_point(centre,contextptr)),contextptr));
+                tracemode_disp.push_back(N);
+              }
+              if (tracemode & 8){
+                if (R.type==_DOUBLE_)
+                  tracemode_add += ", R="+print_DOUBLE_(R._DOUBLE_val,3);
+                tracemode_disp.push_back(_cercle(makesequence(centre,R),contextptr));
+              }
+            }
+          }
+        }
       }
     }
     double x_scale=LCD_WIDTH_PX/(window_xmax-window_xmin);
@@ -15867,6 +15913,9 @@ namespace xcas {
       edptr->python=1;
     if (do_confirm((lang==1)?"Effacer les variables Xcas?":"Clear Xcas variables?"))
       do_restart(contextptr);
+#ifdef MICROPY_LIB
+    micropy_ck_eval("1"); // insure initialization
+#endif
     *logptr(contextptr) << "Micropython interpreter\n";
     Console_FMenu_Init(contextptr);
   }
@@ -16319,7 +16368,7 @@ namespace xcas {
     duration=h+m/100.0;
     return ch;
   }
-  const char conf_standard[] = "F1 algb\nsimplify(\nfactor(\npartfrac(\ntcollect(\ntexpand(\nsum(\noo\nproduct(\nF2 calc\n'\ndiff(\nintegrate(\nlimit(\nseries(\nsolve(\ndesolve(\nrsolve(\nF5  2d \nreserved\nF4 menu\nreserved\nF6 reg\nlinear_regression_plot(\nlogarithmic_regression_plot(\nexponential_regression_plot(\npower_regression_plot(\npolynomial_regression_plot(\nsin_regression_plot(\nscatterplot(\nmatrix(\nF< poly\nproot(\npcoeff(\nquo(\nrem(\ngcd(\negcd(\nresultant(\nGF(\nF9 arit\n mod \nirem(\nifactor(\ngcd(\nisprime(\nnextprime(\npowmod(\niegcd(\nF7 lin\nmatrix(\ndet(\nmatpow(\nranm(\nrref(\ntran(\negvl(\negv(\nF= list\nmakelist(\nrange(\nseq(\nlen(\nappend(\nranv(\nsort(\napply(\nF3 plot\nplot(\nplotseq(\nplotlist(\nplotparam(\nplotpolar(\nplotfield(\nhistogram(\nbarplot(\nF; real\nexact(\napprox(\nfloor(\nceil(\nround(\nsign(\nmax(\nmin(\nF> prog\n:\n&\n#\nhexprint(\nbinprint(\nf(x):=\ndebug(\npython(\nF8 cplx\nabs(\narg(\nre(\nim(\nconj(\ncsolve(\ncfactor(\ncpartfrac(\nF: misc\n!\nrand(\nbinomial(\nnormald(\nexponentiald(\n and \n or \nperiodic_table\nF? geo\npoint(\nline(\ncircle(\nplane(\nF@ color\ncolor=\nred\ncyan\ngreen\nblue\nmagenta\nyellow\n";
+  const char conf_standard[] = "F1 algb\nsimplify(\nfactor(\npartfrac(\ntcollect(\ntexpand(\nsum(\noo\nproduct(\nF2 calc\n'\ndiff(\nintegrate(\nlimit(\nseries(\nsolve(\ndesolve(\nrsolve(\nF3 plot\nplot(\nplotseq(\nplotlist(\nplotparam(\nplotpolar(\nplotfield(\nhistogram(\nbarplot(\nF4 menu\nreserved\nF5  2d \nreserved\nF6 reg\nlinear_regression_plot(\nlogarithmic_regression_plot(\nexponential_regression_plot(\npower_regression_plot(\npolynomial_regression_plot(\nsin_regression_plot(\nscatterplot(\nmatrix(\nF7 lin\nmatrix(\ndet(\nmatpow(\nranm(\nrref(\ntran(\negvl(\negv(\nF8 cplx\nabs(\narg(\nre(\nim(\nconj(\ncsolve(\ncfactor(\ncpartfrac(\nF9 arit\n mod \nirem(\nifactor(\ngcd(\nisprime(\nnextprime(\npowmod(\niegcd(\nF; real\nexact(\napprox(\nfloor(\nceil(\nround(\nsign(\nmax(\nmin(\nF< poly\nproot(\npcoeff(\nquo(\nrem(\ngcd(\negcd(\nresultant(\nGF(\nF= list\nmakelist(\nrange(\nseq(\nlen(\nappend(\nranv(\nsort(\napply(\nF> prog\n:\n&\n#\nhexprint(\nbinprint(\nf(x):=\ndebug(\npython(\nF? color\ndisplay=\nfilled\nred\ncyan\ngreen\nblue\nmagenta\nyellow\nFA misc\n!\nrand(\nbinomial(\nnormald(\nexponentiald(\n and \n or \nperiodic_table\nFB geo\npoint(\nline(\ncircle(\nplane(\n";
 
   const char python_conf_standard[] = "F1 misc\nprint(\ninput(\n;\n:\n[]\ndef f(x): return \ntime()\nfrom time import *\nF2 math\nfloor(\nceil(\nround(\nmin(\nmax(\nabs(\nsqrt(\nfrom math import *\nF3 c&rand\nrandint(\nrandom()\nchoice(\nfrom random import *\n.real\n.imag\nphase(\nfrom cmath import *;i=1j\nF4 menu\nreserved\nF5  2d\nreserved\nF6 tortue\nforward(\nbackward(\nleft(\nright(\npencolor(\ncircle(\nreset()\nfrom turtle import *\nF7 linalg\nmatrix(\nadd(\nsub(\nmul(\ninv(\nrref(\ntranspose(\nfrom linalg import *;i=1j\nF8 numpy\narray(\nreshape(\narange(\nlinspace(\nsolve(\neig(\ninv(\nfrom numpy import *;i=1j\nF9 arit\npow(\nisprime(\nnextprime(\nifactor(\ngcd(\nlcm(\niegcd(\nfrom arit import *\nF< color\nred\nblue\ngreen\ncyan\nyellow\nmagenta\nblack\nwhite\nF; draw\nclear_screen();\nshow_screen();\nset_pixel(\ndraw_line(\ndraw_rectangle(\n\ndraw_circle(\ndraw_string(\nfrom graphic import *\nF: plot\nclf()\nplot(\ntext(\narrow(\nscatter(\nbar(\nshow()\nfrom matplotl import *\nF= list\nlist(\nrange(\nlen(\nappend(\nzip(\nsorted(\nmap(\nreversed(\nF> prog\n|\n&\n#\nhex(\nbin(\ndebug(\nfrom cas import *\ncaseval(\"\")\n";
   
@@ -19821,6 +19870,7 @@ static void display(textArea *text, int &isFirstDraw, int &totalTextY, int &scro
 	for (int i=0;i<L/4;++i){
 	  if (ptr[i]!=0xffffffff){ // it's not, format
 	    char * buf=(char *)malloc(L);
+            if (!buf) return false,
 	    memcpy(buf,(char *)backupaddr,L);
 	    erase_sector((const char *)backupaddr);
 	    WriteMemory((char *)backupaddr,buf,L);
@@ -20412,9 +20462,7 @@ static void display(textArea *text, int &isFirstDraw, int &totalTextY, int &scro
   }
 
   int run_session(int start,GIAC_CONTEXT){
-#ifdef MICROPY_LIB
-    micropy_ck_eval("1"); // insure initialization
-#endif
+    //confirm("run_session",print_INT_(start).c_str());
     std::vector<std::string> v;
     for (int i=start;i<Last_Line;++i){
       if (Line[i].type==LINE_TYPE_INPUT)
@@ -20436,6 +20484,7 @@ static void display(textArea *text, int &isFirstDraw, int &totalTextY, int &scro
     Cursor.y=start-Start_Line;
     Line[start].str=Edit_Line;
     Edit_Line[0]=0;
+    //confirm("run_session v.size",print_INT_(v.size()).c_str());
     if (v.empty()) return 0;
     //Console_Init(contextptr);
     for (int i=0;i<v.size();++i){
@@ -20444,12 +20493,17 @@ static void display(textArea *text, int &isFirstDraw, int &totalTextY, int &scro
       Console_NewLine(LINE_TYPE_INPUT, 1);
       // Line[j].type=LINE_TYPE_INPUT;
       Console_Disp(1,contextptr);
-      Bdisp_PutDisp_DD();
       run(v[i].c_str(),6,contextptr); /* show logo and graph but not eqw */
+#ifdef NUMWORKS
+      //confirm(v[i].c_str(),Line[Last_Line].str);
+      //print_msg12(v[i].c_str(),Line[Last_Line].str);
+#endif
+      Bdisp_PutDisp_DD();
       // j=Last_Line;
       Console_NewLine(LINE_TYPE_OUTPUT, 1);    
       // Line[j].type=LINE_TYPE_OUTPUT;
     }
+    //confirm("run session","end0");
     int cl=Current_Line;
     Cursor.y += (Start_Line-savestartline);
     if (Cursor.y<0) Cursor.y=0;
@@ -20466,6 +20520,7 @@ static void display(textArea *text, int &isFirstDraw, int &totalTextY, int &scro
     }
     Console_Disp(1,contextptr);
     Bdisp_PutDisp_DD();
+    //confirm("run session","end0");
     return 0;
   }
 
@@ -21983,7 +22038,7 @@ void numworks_certify_internal(){
       numworks_certify_internal();
       Bdisp_AllClr_VRAM();
       int x=0,y=0;
-      PrintMini7(x,y,"KhiCAS 1.9 (c) 2024 B. Parisse",TEXT_MODE_NORMAL, COLOR_BLACK, COLOR_WHITE,false);
+      PrintMini7(x,y,"KhiCAS 2.0 (c) 2025 B. Parisse",TEXT_MODE_NORMAL, COLOR_BLACK, COLOR_WHITE,false);
       y +=18;
       PrintMini7(x,y,"et al, License GPL 2",TEXT_MODE_NORMAL,COLOR_BLACK, COLOR_WHITE,false);
       y += 18;
@@ -22037,13 +22092,14 @@ void numworks_certify_internal(){
 #ifdef NUMWORKS
 #if defined NUMWORKS_SLOTAB || defined NUMWORKS_SLOTB
       if (lang==1){
-	*logptr(contextptr) << "!!! DU CAS POUR TOUS !!!\n";
+	//*logptr(contextptr) << "!!! DU CAS POUR TOUS !!!\n";
 	*logptr(contextptr) << "Le calcul formel est autorise\n";
         *logptr(contextptr) << "aux examens en France.\n";
 	*logptr(contextptr) << "Mobilisez-vous! Numworks peut\n";
 	*logptr(contextptr) << "authentifier et rendre KhiCAS\n";
 	*logptr(contextptr) << "utilisable en mode exam comme\n";
-	*logptr(contextptr) << "sur les calcs CAS plus cheres\n";
+	// *logptr(contextptr) << "sur les calcs CAS plus cheres\n";
+        *logptr(contextptr) << "sur les TI83ce, Casio 90/35e2\n";        
       } else {
 	*logptr(contextptr) << "!!! BEWARE !!!\n";
 	*logptr(contextptr) << "Make sure that CAS is allowed\n";
@@ -22586,7 +22642,8 @@ void numworks_certify_internal(){
 	Console_Disp(1,contextptr);
 	continue;
       }
-#ifndef BW
+#ifndef NUMWORKS
+#ifndef BW 
       if (key==KEY_CTRL_S || key==KEY_CTRL_T){
         giac::gen g=sheet(contextptr);
         if (g.type==_INT_ && g.val==KEY_SHUTDOWN)
@@ -22608,6 +22665,7 @@ void numworks_certify_internal(){
 	Console_Disp(1,contextptr);
 	continue;
       }
+#endif // NUMWORKS
       if (key==KEY_CTRL_MENU){
 #if 1
 	Menu smallmenu;
@@ -22898,7 +22956,7 @@ void numworks_certify_internal(){
         return CONSOLE_SUCCEEDED;
       }
       if ( (key >= KEY_CTRL_F1 && key <= KEY_CTRL_F6) ||
-	   (key >= KEY_CTRL_F7 && key <= KEY_CTRL_F14) 
+	   (key >= KEY_CTRL_F7 && key <= KEY_CTRL_F20) 
 	   ){
 	Console_FMenu(key,contextptr);
 	Console_Disp(1,contextptr);
@@ -23000,6 +23058,7 @@ void numworks_certify_internal(){
         Console_Disp(1,contextptr);
         continue;
       }
+#ifndef NUMWORKS
       if (key==KEY_AFFECT){
 	Console_Input((const char*)":=");
 	Console_Disp(1,contextptr);
@@ -23009,13 +23068,13 @@ void numworks_certify_internal(){
 	Console_Input((const char*)"debug(");
 	Console_Disp(1,contextptr);
 	continue;
-      }	
+      }
       if (key == KEY_CTRL_SETUP) {
 	menu_setup(contextptr);
 	Console_Disp(1,contextptr);
 	continue;
       }
-
+#endif
       if (key == KEY_CTRL_EXE || key==KEY_CTRL_OK){
 	if (Current_Line == Last_Line)
 	  {
@@ -23083,7 +23142,7 @@ void numworks_certify_internal(){
   }
 
   const char * console_menu(int key,char* cfg_,int active_app){
-    if (key>=KEY_CTRL_F7 && key<=KEY_CTRL_F14) key-=900;
+    if (key>=KEY_CTRL_F7 && key<=KEY_CTRL_F20) key-=900;
     char * cfg=cfg_;
     int i, matched = 0;
     const char * ret=0;

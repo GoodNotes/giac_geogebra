@@ -6279,7 +6279,7 @@ static define_unary_function_eval (__hamdist,&_hamdist,_hamdist_s);
   gen _plotarea(const gen & g,GIAC_CONTEXT){
     if ( g.type==_STRNG && g.subtype==-1) return  g;
     vecteur v(gen2vecteur(g));
-    vecteur attributs(default_color(contextptr));
+    vecteur attributs(1,default_color(contextptr));
     int s=read_attributs(v,attributs,contextptr);
     if (!s)
       return gensizeerr(contextptr);
@@ -6288,9 +6288,27 @@ static define_unary_function_eval (__hamdist,&_hamdist,_hamdist_s);
     if (attributs[0].type==_INT_)
       attributs[0].val= attributs[0].val | _FILL_POLYGON;
     v[0]=remove_at_pnt(v[0]);
+    if (v[0].is_symb_of_sommet(at_curve)){
+      attributs.resize(2);
+      vecteur w=gen2vecteur(v[0][2]);
+      int s=w.size();
+      if (s){
+        // add projection of end vertices on the Ox axis
+        gen x,y;
+        reim(w[s-1],x,y,contextptr);
+        w.push_back(x);
+        reim(w[0],x,y,contextptr);
+        w.push_back(x);
+        v[0]=gen(w,_GROUP__VECT);
+      }
+    }
     if (v[0].type==_VECT){
-      attributs[1]=_aire(v[0],contextptr);
-      return pnt_attrib(v[0],attributs,contextptr);
+      gen a=abs(_aire(v[0],contextptr),contextptr);
+      int nd=decimal_digits(contextptr);
+      decimal_digits(3,contextptr);
+      attributs[1]=string2gen(a.print(contextptr),false);
+      decimal_digits(nd,contextptr);
+      return makesequence(pnt_attrib(v[0],attributs,contextptr),_legende(makesequence(makevecteur(30,30),attributs[1]),contextptr));
     }
     if (s>=2 && v[0].type!=_VECT){
       gen tmp(v[1]),a,b,x(vx_var);
@@ -11034,7 +11052,7 @@ void sync_screen(){}
 	var req = new XMLHttpRequest();
 	var bufsize=$2;
 	req.open("GET", url, false); // false: synchrone, true: async
-	req.overrideMimeType("text/plain; charset=x-user-defined");
+	req.overrideMimeType("application/octet-stream"); // "text/plain; charset=x-user-defined");
 	req.send(null); 
 	// will not work on different domain, except if 
 	// cross-domain is enabled (firefox CORS extension like Cross Domain)

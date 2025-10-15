@@ -1191,6 +1191,7 @@ namespace giac {
   }
 
   const char * identificateur::print(GIAC_CONTEXT) const{
+    if (!id_name || (uintptr_t)id_name < 0x1000) return "?";
     if (!strcmp(id_name,string_pi)){
 #if defined NUMWORKS || defined HP39
       return string_pi;
@@ -1229,7 +1230,7 @@ namespace giac {
       return string("~") + *name ;
     else
     */
-    return id_name  ;
+    return id_name ? id_name : "?";
   }
 
 #ifdef NSPIRE

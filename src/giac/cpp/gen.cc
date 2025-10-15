@@ -266,6 +266,9 @@ namespace giac {
     }
 #endif
     void * p =  malloc(size);  
+#if defined NUMWORKS || defined KHICAS
+    if (!p) exit(0);
+#endif
 #ifndef NO_STDEXCEPT
     if(!p) {
       std::bad_alloc ba;
@@ -2203,6 +2206,7 @@ namespace giac {
 
   static bool in_eval_idnt(const gen & g,gen & evaled,int level,GIAC_CONTEXT){
     identificateur * gptr=g._IDNTptr;
+    if (!gptr->id_name || (uintptr_t)gptr->id_name < 0x1000) return false;
     if (strcmp(gptr->id_name,string_pi)==0 || strcmp(gptr->id_name,string_euler_gamma)==0 )
       return false;
     if (!contextptr && g.subtype==_GLOBAL__EVAL)
@@ -2343,13 +2347,13 @@ namespace giac {
       { 
 	symbolic * sptr=_SYMBptr;
 	unary_function_ptr & Sommet=sptr->sommet;
-	const gen & feuille=sptr->feuille;
-	bool is_ifte=false,is_of_local_ifte_bloc=false,is_plus=Sommet==at_plus,is_prod=false,is_pow=false;
-	if (is_plus || (is_prod=(Sommet==at_prod)) || (is_pow=(Sommet==at_pow)) || (is_of_local_ifte_bloc=(Sommet==at_of || Sommet==at_local || (is_ifte=Sommet==at_ifte) || Sommet==at_bloc)) ){
+  const gen & feuille=sptr->feuille;
+  bool is_ifte=false,is_of_local_ifte_bloc=false,is_plus=Sommet==at_plus,is_prod=false,is_pow=false;
+  if (is_plus || (is_prod=(Sommet==at_prod)) || (is_pow=(Sommet==at_pow)) || (is_of_local_ifte_bloc=(Sommet==at_of || Sommet==at_local || (is_ifte=Sommet==at_ifte) || Sommet==at_bloc)) ){
 	  int & elevel=eval_level(contextptr);
 	  short int slevel=elevel;
 	  // Check if we are not far from stack end
-#ifdef RTOS_THREADX
+  #ifdef RTOS_THREADX
 	  if ((void *)&slevel<= (void *)&mainThreadStack[2048]){
 	    if ((void *)&slevel<= (void *)&mainThreadStack[1024]){
 	      gensizeerr(gettext("Too many recursion levels"),evaled); // two many recursion levels
@@ -2643,6 +2647,7 @@ namespace giac {
   }
 
   static bool has_evalf(const identificateur & g,int subtype,gen & res,int level,GIAC_CONTEXT){
+    if (!g.id_name || (uintptr_t)g.id_name < 0x1000) return false;
     if (strcmp(g.id_name,string_pi)==0){
       res=m_pi(contextptr);
       return true;
@@ -2757,6 +2762,7 @@ namespace giac {
       evaled=_USERptr->evalf(level,contextptr);
       return true;
     case _IDNT:
+      if (!_IDNTptr->id_name || (uintptr_t)_IDNTptr->id_name < 0x1000) return false;
       if (strcmp(_IDNTptr->id_name,string_pi)==0){
 	evaled=m_pi(contextptr);
 	return true;
@@ -6870,7 +6876,7 @@ namespace giac {
 	return symbolic(at_program,gen(makevecteur(a,0,pow(base,b,contextptr)),_SEQ__VECT));
     }
     if (base.type==_VECT && base.subtype!=_POLY1__VECT && !is_squarematrix(base)){
-      *logptr(contextptr) << gettext("Warning, ^ is ambiguous on non square matrices. Use .^ to apply ^ element by element.") << '\n';
+      return gensizeerr(gettext("^ is ambiguous on non square matrices."));  //*logptr(contextptr) << gettext("Warning, ^ is ambiguous on non square matrices. Use .^ to apply ^ element by element.") << '\n';
       if (exponent.type==_VECT)
 	return apply(base,exponent,contextptr,giac_pow);
       if (base.subtype!=_LIST__VECT && (exponent.type==_INT_ && exponent.val %2==0) )
@@ -8916,15 +8922,21 @@ namespace giac {
   }
 
   bool identificateur::operator ==(const identificateur & i){
+    if (!id_name || !i.id_name) return id_name == i.id_name;
+    if ((uintptr_t)id_name < 0x1000 || (uintptr_t)i.id_name < 0x1000) return false;
     return id_name==i.id_name || !strcmp(id_name,i.id_name); 
   }
 
   bool operator ==(const gen & a,const identificateur & i){
-    return a.type==_IDNT && (a._IDNTptr->id_name==i.id_name || !strcmp(a._IDNTptr->id_name,i.id_name)); 
+    if (a.type != _IDNT || !a._IDNTptr->id_name || !i.id_name) return false;
+    if ((uintptr_t)a._IDNTptr->id_name < 0x1000 || (uintptr_t)i.id_name < 0x1000) return false;
+    return a._IDNTptr->id_name==i.id_name || !strcmp(a._IDNTptr->id_name,i.id_name); 
   }
 
   bool identificateur::operator ==(const gen & i){
-    return i.type==_IDNT && (id_name==i._IDNTptr->id_name || !strcmp(id_name,i._IDNTptr->id_name));   
+    if (i.type != _IDNT || !id_name || !i._IDNTptr->id_name) return false;
+    if ((uintptr_t)id_name < 0x1000 || (uintptr_t)i._IDNTptr->id_name < 0x1000) return false;
+    return id_name==i._IDNTptr->id_name || !strcmp(id_name,i._IDNTptr->id_name);   
   }
 
   bool operator ==(const gen & a,const gen & b){
@@ -9237,7 +9249,7 @@ namespace giac {
   bool is_inf(const gen & e){
     switch (e.type){
     case _IDNT:
-      return !strcmp(e._IDNTptr->id_name,string_infinity);
+      return e._IDNTptr->id_name && (uintptr_t)e._IDNTptr->id_name >= 0x1000 && !strcmp(e._IDNTptr->id_name,string_infinity);
     case _SYMB:
       return is_inf(e._SYMBptr->feuille);
     case _DOUBLE_:
@@ -9264,7 +9276,7 @@ namespace giac {
   bool is_undef(const gen & e){
     switch (e.type){
     case _IDNT:
-      return !strcmp(e._IDNTptr->id_name,string_undef);
+      return e._IDNTptr->id_name && (uintptr_t)e._IDNTptr->id_name >= 0x1000 && !strcmp(e._IDNTptr->id_name,string_undef);
     case _STRNG:
       return e.subtype==-1;
     case _VECT:
@@ -10579,6 +10591,7 @@ namespace giac {
     b=t;
   }
 
+#ifndef TICE
   int absint(int a){
     if (a<0){
       if (a==-2147483648)
@@ -10609,6 +10622,7 @@ namespace giac {
     else
       return a;
   }
+#endif
 
   int invmod(int a,int b){
     if (a==1 || a==-1 || a==1-b)
@@ -10966,8 +10980,20 @@ namespace giac {
       // "factor" dd=extension(ua,uv)*extension(u,uv)
       gen dd0(dd.front());
       simplify(b2,dd0);
-      if (is_one(dd0))
-	return res*algebraic_EXTension(ua,*(a._EXTptr+1));
+      if (is_one(dd0)){
+	res=res*algebraic_EXTension(ua,*(a._EXTptr+1));
+        if (0) return res;
+        // changed 2025 April 22 for factor(√(-5*(√(92*x^2-12*x+45)*abs(x)+(-2*√5)*x^2+(-3*√5)*x)/√5/36));
+#ifndef NO_STDEXCEPT
+        try {
+          gen resf=evalf(res,1,contextptr);
+          if (is_positive(-resf,contextptr))
+            res=-res;
+        } catch (std::runtime_error&e){
+          *logptr(contextptr) << "Previous error catched\n";
+        }
+#endif
+      }
       return res;
     }
     if (b.type==_EXT)
@@ -12541,6 +12567,10 @@ namespace giac {
 #ifdef HAVE_LIBPTHREAD
     static pthread_mutex_t parse_mutex = PTHREAD_MUTEX_INITIALIZER;
     int locked = pthread_mutex_lock(&parse_mutex);
+    if (locked != 0) {
+        CERR << "Failed to acquire parse mutex lock!" << '\n';
+        return 0;
+    }
 #else // HAVE_LIBPTHREAD
     int locked = 0;
 #endif
@@ -12730,6 +12760,10 @@ int sprint_int(char * s,int r){
 
 void sprint_double(char * s,double d){
   char * buf=s;
+  if (my_isnan(d)){
+    strcpy(buf,"nan");
+    return;
+  }
   if (d==0){
     strcpy(buf,"0.0");
     return;
@@ -16881,7 +16915,13 @@ void sprint_double(char * s,double d){
       strcat(filename,".py");
 #endif
       char buf[4096]="def f(x):\n  return x*x\n";
-      if (file_exists(filename)){
+      if (
+#ifdef KHICAS
+          file_exists(filename)
+#else
+          !access(filename,R_OK)
+#endif
+          ){
 	const char * ch=read_file(filename);
 	S=ch;
 	if (S.size()>sizeof(buf))

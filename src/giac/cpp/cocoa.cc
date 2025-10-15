@@ -803,7 +803,7 @@ namespace giac {
       }
     }
     ~tdeg_t64(){
-      if (tab[0]%2 && ui){
+      if ((tab[0]%2) && ui){
 #ifdef ATOMIC
 	if (atomic_fetch_add((atomic<longlong> *) ui,-1)==0){
 	  free(ui);
@@ -1182,6 +1182,12 @@ namespace giac {
 #endif
       return x=x+y;
     }
+#ifdef GIAC_DEBUG_TDEG_T64
+    if ((y.tab[0]%2)){
+      y.dbgprint();
+      COUT << "erreur" << '\n';
+    }
+#endif
 #endif    
 #if 1
     ulonglong *xtab=(ulonglong *)&x,*ytab=(ulonglong *)&y;
@@ -1226,7 +1232,7 @@ namespace giac {
     return res;
   }
   
-  tdeg_t64 operator + (const tdeg_t64 & x,const tdeg_t64 & y){
+  tdeg_t64 operator + (const tdeg_t64 & x,const tdeg_t64 & y){ 
 #ifdef GIAC_64VARS
     if (x.tab[0]%2){
 #ifdef GIAC_DEBUG_TDEG_T64
@@ -1236,6 +1242,12 @@ namespace giac {
       return dynamic_plus(x,y);
     }
 #endif    
+#ifdef GIAC_DEBUG_TDEG_T64
+    if (y.tab[0]%2){
+      y.dbgprint();
+      COUT << "erreur" << '\n';
+    }
+#endif
     tdeg_t64 res(x);
     return res += y;
 #if 1
@@ -1332,7 +1344,13 @@ namespace giac {
       res.compute_degs();
       return res;
     }
+#ifdef GIAC_DEBUG_TDEG_T64
+    if ((y.tab[0]%2)){
+      y.dbgprint();
+      COUT << "erreur" << '\n';
+    }
 #endif    
+#endif // GIAC_64VARS   
     tdeg_t64 res;
 #if 1
     ulonglong *xtab=(ulonglong *)&x,*ytab=(ulonglong *)&y,*ztab=(ulonglong *)&res;
@@ -15897,7 +15915,7 @@ void G_idn(vector<unsigned> & G,size_t s){
       vector< vector<int> > Kxi(d,vector<int>(S)); Kxi.reserve(d);
       polymod<tdeg_t,modint_t> si(order,dim);
       polymod<tdeg_t,modint_t> one(order,dim);
-      one.coord.push_back(T_unsigned<modint_t,tdeg_t>(1,0));
+      one.coord.push_back(T_unsigned<modint_t,tdeg_t>(1,tdeg_t(index_m(dim),order)));
       vector<bool> nonzero(S,false); vector<int> posxi(d,-1);
       index_t l(dim);
       for (unsigned i=0;int(i)<d;++i){

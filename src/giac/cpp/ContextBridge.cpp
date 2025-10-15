@@ -3,12 +3,9 @@
 #include <pthread.h>
 #include <stdexcept>
 
-#ifdef HAVE_LIBPTHREAD
-static pthread_mutex_t context_mutex = PTHREAD_MUTEX_INITIALIZER;
-#endif
-
 ContextBridge::ContextBridge() {
 #ifdef HAVE_LIBPTHREAD
+    static pthread_mutex_t context_mutex = PTHREAD_MUTEX_INITIALIZER;
     if (pthread_mutex_lock(&context_mutex) != 0) {
         throw std::runtime_error("Failed to lock context mutex");
     }
@@ -29,14 +26,15 @@ ContextBridge::ContextBridge() {
 }
 
 ContextBridge::~ContextBridge() {
+    static pthread_mutex_t context_mutex2 = PTHREAD_MUTEX_INITIALIZER;
 #ifdef HAVE_LIBPTHREAD
-    if (pthread_mutex_lock(&context_mutex) != 0) {
+    if (pthread_mutex_lock(&context_mutex2) != 0) {
         throw std::runtime_error("Failed to lock context mutex");
     }
 #endif
     delete c;
 #ifdef HAVE_LIBPTHREAD
-    if (pthread_mutex_unlock(&context_mutex) != 0) {
+    if (pthread_mutex_unlock(&context_mutex2) != 0) {
         throw std::runtime_error("Failed to unlock context mutex");
     }
 #endif

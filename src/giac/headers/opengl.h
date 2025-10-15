@@ -19,6 +19,7 @@ extern "C" void console_log(const char * s);
 
 extern "C" int init_fs();
 
+extern std::string init_filename;
 #endif
 
 #ifndef NO_NAMESPACE_GIAC
@@ -248,4 +249,4 @@ namespace giac {
 } // namespace giac
 #endif // ndef NO_NAMESPACE_GIAC
 
-#endif // _GRAPH3D_H
+#endif // _OPENGL_H

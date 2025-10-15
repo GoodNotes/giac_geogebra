@@ -3919,6 +3919,13 @@ namespace giac {
   // integrate w=[M,N]=Mdx+Ndy along curve, v=[x,y]
   // or more generally w vector field along curve, v=[x1,..,xdim]
   gen curviligne(const vecteur & w,const vecteur & v,const gen & curve,const gen & V,const gen & tmin_,const gen & tmax_,GIAC_CONTEXT){
+    if (curve.type==_VECT){
+      gen S=0;
+      vecteur c=*curve._VECTptr;
+      for (int i=0;i<c.size();++i)
+        S += curviligne(w,v,c[i],V,tmin_,tmax_,contextptr);
+      return S;
+    }
     if (curve.is_symb_of_sommet(at_union)){
       vecteur f=gen2vecteur(curve._SYMBptr->feuille);
       gen res=0;
@@ -4037,9 +4044,13 @@ namespace giac {
     }
     if (s==1)
       return gentoofewargs("integrate");
-    if (s==2 && v[0].type==_VECT && v[0]._VECTptr->size()==2 && (v[1].is_symb_of_sommet(at_pnt) || v[1].is_symb_of_sommet(at_union))) 
-      return curviligne(*v[0]._VECTptr,makevecteur(x__IDNT_e,y__IDNT_e),v[1],undef,undef,contextptr);
-
+    if (s==2){
+      gen v0=eval(v[0],1,contextptr);
+      gen v1=eval(v[1],1,contextptr);
+      int t1=graph_output_type(v1);
+      if (v0.type==_VECT && v0._VECTptr->size()==2 && (t1==2 || v1.is_symb_of_sommet(at_union))) 
+        return curviligne(*v0._VECTptr,makevecteur(x__IDNT_e,y__IDNT_e),v1,undef,undef,contextptr);
+    }
     if (s==7){
       for (int i=0;i<s;++i)
         v[i]=eval(v[i],1,contextptr);
@@ -4949,7 +4960,7 @@ namespace giac {
       // could add a minimal number of intervals for integrals like
       // integrate(when(x > 2, 1,2),x,0,2.01) or int(frac(x),x,0,6.01)
       // but one will always find intervals where this would fail
-      if (!is_undef(ERR) && is_greater(eps,ERR/I30ABS,contextptr)) 
+      if (v.size()>=8 && !is_undef(ERR) && is_greater(eps,ERR/I30ABS,contextptr)) 
 	return true;
       // cut interval at maxerrpos in 2 parts
       vecteur & w = *v[maxerrpos]._VECTptr;

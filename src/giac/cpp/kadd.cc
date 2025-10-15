@@ -529,6 +529,12 @@ int fractale(GIAC_CONTEXT){
 }
 #endif
 
+#if defined NUMWORKS_SLOTB
+int finance(int mode,GIAC_CONTEXT){ // mode==-1 pret, 1 placement
+  do_confirm("Not available in short version");
+  return 0;
+}
+#else
 int finance(int mode,GIAC_CONTEXT){ // mode==-1 pret, 1 placement
   static double pv=(-mode)*10000;
   static double fv=0;
@@ -669,6 +675,7 @@ int finance(int mode,GIAC_CONTEXT){ // mode==-1 pret, 1 placement
   }
   return 0;
 }
+#endif
 
 int geoapp(GIAC_CONTEXT);
 
@@ -951,7 +958,7 @@ int flash_from_ram(const char * buf,const char * ext,size_t & first_modif,GIAC_C
   int n=giac_filebrowser(filename,ext,(lang==1?"Choisir fichier a copier":"Select file to copy"),0);
   if (n==0) return 0;
   const char * data=read_file(filename);
-#ifdef DEVICE
+#if defined DEVICE || defined NUMWORKS
   int l=strlen(data);
 #else
   int l=filesize(filename);
