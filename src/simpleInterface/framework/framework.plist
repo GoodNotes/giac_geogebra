@@ -17,7 +17,7 @@
 	<key>CFBundleShortVersionString</key>
 	<string>1.0</string>
 	<key>MinimumOSVersion</key>
-	<string>16.6</string>
+	<string>18.6</string>
 	<key>DTSDKName</key>
 	<string>iphonesimulator11.2</string>
 </dict>

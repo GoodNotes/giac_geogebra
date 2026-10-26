@@ -69,6 +69,42 @@ namespace giac {
     bool s_dynalloc;
   };
 
+  volatile bool giac_identifier_corruption_detected = false;
+  const void * giac_identifier_corruption_last_pointer = nullptr;
+
+  bool identifier_name_is_plausible(const char * id_name){
+    // A real identifier name is always a short, NUL-terminated, printable
+    // C string (or nullptr for a never-named identifier, treated separately
+    // by callers). Anything else -- including an address low enough to be a
+    // null-page/small-integer artifact, or a pointer whose bytes don't look
+    // like a short printable string -- is treated as corruption rather than
+    // risking undefined behaviour (e.g. strcmp running off into unmapped or
+    // unrelated memory).
+    if (!id_name) return false;
+    if ((uintptr_t)id_name < 0x1000) {
+      giac_identifier_corruption_detected = true;
+      giac_identifier_corruption_last_pointer = id_name;
+      return false;
+    }
+    const size_t maxLen = 256; // real identifier names are always far shorter
+    size_t len = 0;
+    for (; len < maxLen; ++len){
+      unsigned char c = (unsigned char) id_name[len];
+      if (c == 0) break;
+      if (c < 32 || c >= 127){
+	giac_identifier_corruption_detected = true;
+	giac_identifier_corruption_last_pointer = id_name;
+	return false;
+      }
+    }
+    if (len == 0 || len == maxLen){
+      giac_identifier_corruption_detected = true;
+      giac_identifier_corruption_last_pointer = id_name;
+      return false;
+    }
+    return true;
+  }
+
 #ifdef DOUBLEVAL // #ifdef GIAC_GENERIC_CONSTANTS
   const char string_euler_gamma[]="euler_gamma";
   identificateur _IDNT_euler_gamma(string_euler_gamma,(double) .577215664901533);
@@ -689,8 +725,16 @@ namespace giac {
     int_string_shortint_bool * ptr = new int_string_shortint_bool;
     ptr->i=1;
     ptr->b=0;
-    ptr->s=s;
-    ptr->s_dynalloc=false;
+    // Always take our own copy of the name rather than borrowing the caller's
+    // pointer: callers of this overload have in the past passed pointers into
+    // short-lived buffers (e.g. lexer token text), which left id_name dangling
+    // once that buffer was reused -- a long-standing source of hard-to-diagnose
+    // EXC_BAD_ACCESS crashes reading id_name elsewhere (lvar, print, ...).
+    size_t len = strlen(s);
+    char * c = new char[len+1];
+    memcpy(c,s,len+1);
+    ptr->s=c;
+    ptr->s_dynalloc=true;
     ref_count_ptr = &ptr->i ;
     value = NULL;
     quoted = &ptr->b ;
@@ -735,8 +779,12 @@ namespace giac {
     int_string_shortint_bool * ptr = new int_string_shortint_bool;
     ptr->i=1;
     ptr->b=0;
-    ptr->s=s;
-    ptr->s_dynalloc=false;
+    // See identificateur(const char *) above: always copy, never borrow.
+    size_t len = strlen(s);
+    char * c = new char[len+1];
+    memcpy(c,s,len+1);
+    ptr->s=c;
+    ptr->s_dynalloc=true;
     ref_count_ptr = &ptr->i ;
     quoted = &ptr->b ;
     localvalue = 0;
@@ -1191,7 +1239,7 @@ namespace giac {
   }
 
   const char * identificateur::print(GIAC_CONTEXT) const{
-    if (!id_name || (uintptr_t)id_name < 0x1000) return "?";
+    if (!identifier_name_is_plausible(id_name)) return "";
     if (!strcmp(id_name,string_pi)){
 #if defined NUMWORKS || defined HP39
       return string_pi;
@@ -1230,7 +1278,7 @@ namespace giac {
       return string("~") + *name ;
     else
     */
-    return id_name ? id_name : "?";
+    return id_name ? id_name : "";
   }
 
 #ifdef NSPIRE

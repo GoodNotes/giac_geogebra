@@ -1545,6 +1545,24 @@ namespace giac {
   };
 
 
+  // Returns true if `id_name` looks like a plausible, NUL-terminated identifier
+  // name rather than a dangling/corrupted pointer. Used defensively at every
+  // site that reads identificateur::id_name, since this field has historically
+  // been observed to occasionally contain garbage (EXC_BAD_ACCESS / use of
+  // uninitialized or freed memory) for reasons not yet root-caused.
+  // On failure, also records the bad pointer so the embedding app can surface
+  // it as a diagnosable (non-fatal) event instead of silently limping on.
+  bool identifier_name_is_plausible(const char * id_name);
+
+  // Set (non-atomically; giac itself is single-threaded by contract) the first
+  // time identifier_name_is_plausible() rejects a pointer since the flag was
+  // last cleared. giac_identifier_corruption_last_pointer holds the rejected
+  // pointer value for diagnostics. Intended to be polled and cleared by the
+  // embedding application (see GenBridge/GenWrapper) after each top-level call
+  // into giac, so a single corruption event isn't silently swallowed.
+  extern volatile bool giac_identifier_corruption_detected;
+  extern const void * giac_identifier_corruption_last_pointer;
+
   class identificateur {
   public:
     int * ref_count_ptr;
@@ -1577,7 +1595,7 @@ namespace giac {
     gen eval(int level,const gen & orig,const context * context_ptr) ;
     bool in_eval(int level,const gen & orig,gen & evaled,const context * context_ptr, bool No38Lookup=false); // if No38Lookup, does not check if HP38 knows about this name...
     const char * print(const context * context_ptr) const ;
-    std::string name() const { return id_name ? id_name : "?"; }
+    std::string name() const { return id_name ? id_name : ""; }
     const char * dbgprint() const { 
       static std::string s;
       s=this->print(context0); 

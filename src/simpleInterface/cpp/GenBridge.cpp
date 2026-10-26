@@ -2,11 +2,35 @@
 #include "giac.h"
 #include "vecteur.h"
 #include <pthread.h>
+#include <sstream>
 #include <stdexcept>
 
 #ifdef HAVE_LIBPTHREAD
 static pthread_mutex_t gen_mutex = PTHREAD_MUTEX_INITIALIZER;
 #endif
+
+bool GenBridge::checkAndClearIdentifierCorruption(string& outLastPointerHex) {
+#ifdef HAVE_LIBPTHREAD
+	if (pthread_mutex_lock(&gen_mutex) != 0) {
+		throw std::runtime_error("Failed to lock gen mutex");
+	}
+#endif
+	bool detected = giac::giac_identifier_corruption_detected;
+	const void * lastPointer = giac::giac_identifier_corruption_last_pointer;
+	giac::giac_identifier_corruption_detected = false;
+	giac::giac_identifier_corruption_last_pointer = nullptr;
+#ifdef HAVE_LIBPTHREAD
+	if (pthread_mutex_unlock(&gen_mutex) != 0) {
+		throw std::runtime_error("Failed to unlock gen mutex");
+	}
+#endif
+	if (detected) {
+		std::ostringstream oss;
+		oss << lastPointer;
+		outLastPointerHex = oss.str();
+	}
+	return detected;
+}
 
 GenBridge::GenBridge(string expression, ContextBridge& context) {
 #ifdef HAVE_LIBPTHREAD

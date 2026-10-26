@@ -136,9 +136,7 @@ namespace giac {
     {
     identificateur *tmp = e._IDNTptr;
       if (tmp == nullptr) return;
-      if (tmp->id_name == nullptr) return;
-      // Additional safety check for clearly invalid pointers
-      if ((uintptr_t)tmp->id_name < 0x1000) return; // Catch low memory addresses like 0x2
+      if (!identifier_name_is_plausible(tmp->id_name)) return;
       if (strcmp(tmp->id_name,string_undef))
 	addtolvar(e,l);}
       return ;
