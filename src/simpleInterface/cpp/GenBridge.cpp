@@ -34,6 +34,7 @@ bool GenBridge::checkAndClearIdentifierCorruption(string& outLastPointerHex) {
 
 GenBridge::GenBridge(string expression, ContextBridge& context) {
 #ifdef HAVE_LIBPTHREAD
+	static pthread_mutex_t gen_mutex = PTHREAD_MUTEX_INITIALIZER;
 	if (pthread_mutex_lock(&gen_mutex) != 0) {
 		throw std::runtime_error("Failed to lock gen mutex");
 	}
@@ -55,6 +56,7 @@ GenBridge::GenBridge(string expression, ContextBridge& context) {
 
 GenBridge::GenBridge(giac::gen* g) {
 #ifdef HAVE_LIBPTHREAD
+	static pthread_mutex_t gen_mutex = PTHREAD_MUTEX_INITIALIZER;
 	if (pthread_mutex_lock(&gen_mutex) != 0) {
 		throw std::runtime_error("Failed to lock gen mutex");
 	}
@@ -76,6 +78,7 @@ GenBridge::GenBridge(giac::gen* g) {
 
 GenBridge::~GenBridge() {
 #ifdef HAVE_LIBPTHREAD
+	static pthread_mutex_t gen_mutex = PTHREAD_MUTEX_INITIALIZER;
 	if (pthread_mutex_lock(&gen_mutex) != 0) {
 		throw std::runtime_error("Failed to lock gen mutex");
 	}
@@ -90,6 +93,7 @@ GenBridge::~GenBridge() {
 
 void GenBridge::resetTimeout() {
 #ifdef HAVE_LIBPTHREAD
+	static pthread_mutex_t gen_mutex = PTHREAD_MUTEX_INITIALIZER;
 	if (pthread_mutex_lock(&gen_mutex) != 0) {
 		throw std::runtime_error("Failed to lock gen mutex");
 	}
@@ -104,6 +108,7 @@ void GenBridge::resetTimeout() {
 
 void GenBridge::selfEval(int level, ContextBridge& context) {
 #ifdef HAVE_LIBPTHREAD
+	static pthread_mutex_t gen_mutex = PTHREAD_MUTEX_INITIALIZER;
 	if (pthread_mutex_lock(&gen_mutex) != 0) {
 		throw std::runtime_error("Failed to lock gen mutex");
 	}
@@ -127,13 +132,16 @@ void GenBridge::selfEval(int level, ContextBridge& context) {
 
 GenBridge* GenBridge::eval(int level, ContextBridge& context) {
 #ifdef HAVE_LIBPTHREAD
+	static pthread_mutex_t gen_mutex = PTHREAD_MUTEX_INITIALIZER;
 	if (pthread_mutex_lock(&gen_mutex) != 0) {
 		throw std::runtime_error("Failed to lock gen mutex");
 	}
 #endif
 	GenBridge* pointer = nullptr;
 	try {
-		pointer = new GenBridge(new giac::gen(g->eval(level, context.c)));
+		auto evalptr = g->eval(level, context.c);
+		auto giacptr = new giac::gen(evalptr);
+		pointer = new GenBridge(giacptr);
 	} catch (...) {
 #ifdef HAVE_LIBPTHREAD
 		pthread_mutex_unlock(&gen_mutex);
@@ -150,6 +158,7 @@ GenBridge* GenBridge::eval(int level, ContextBridge& context) {
 
 string GenBridge::print(ContextBridge& context) {
 #ifdef HAVE_LIBPTHREAD
+	static pthread_mutex_t gen_mutex = PTHREAD_MUTEX_INITIALIZER;
 	if (pthread_mutex_lock(&gen_mutex) != 0) {
 		throw std::runtime_error("Failed to lock gen mutex");
 	}
@@ -165,6 +174,7 @@ string GenBridge::print(ContextBridge& context) {
 
 GenBridge* GenBridge::lname(ContextBridge& context) {
 #ifdef HAVE_LIBPTHREAD
+	static pthread_mutex_t gen_mutex = PTHREAD_MUTEX_INITIALIZER;
 	if (pthread_mutex_lock(&gen_mutex) != 0) {
 		throw std::runtime_error("Failed to lock gen mutex");
 	}
@@ -189,6 +199,7 @@ GenBridge* GenBridge::lname(ContextBridge& context) {
 
 int GenBridge::type() {
 #ifdef HAVE_LIBPTHREAD
+	static pthread_mutex_t gen_mutex = PTHREAD_MUTEX_INITIALIZER;
 	if (pthread_mutex_lock(&gen_mutex) != 0) {
 		throw std::runtime_error("Failed to lock gen mutex");
 	}
@@ -204,6 +215,7 @@ int GenBridge::type() {
 
 int GenBridge::lenght() {
 #ifdef HAVE_LIBPTHREAD
+	static pthread_mutex_t gen_mutex = PTHREAD_MUTEX_INITIALIZER;
 	if (pthread_mutex_lock(&gen_mutex) != 0) {
 		throw std::runtime_error("Failed to lock gen mutex");
 	}
@@ -225,6 +237,7 @@ int GenBridge::lenght() {
 
 int GenBridge::isNull() {
 #ifdef HAVE_LIBPTHREAD
+	static pthread_mutex_t gen_mutex = PTHREAD_MUTEX_INITIALIZER;
 	if (pthread_mutex_lock(&gen_mutex) != 0) {
 		throw std::runtime_error("Failed to lock gen mutex");
 	}
@@ -240,6 +253,7 @@ int GenBridge::isNull() {
 
 void GenBridge::getListVector(vector<GenBridge*>& list) {
 #ifdef HAVE_LIBPTHREAD
+	static pthread_mutex_t gen_mutex = PTHREAD_MUTEX_INITIALIZER;
 	if (pthread_mutex_lock(&gen_mutex) != 0) {
 		throw std::runtime_error("Failed to lock gen mutex");
 	}
@@ -268,6 +282,7 @@ void GenBridge::getListVector(vector<GenBridge*>& list) {
 
 int GenBridge::equalSign(GenBridge& other) {
 #ifdef HAVE_LIBPTHREAD
+	static pthread_mutex_t gen_mutex = PTHREAD_MUTEX_INITIALIZER;
 	if (pthread_mutex_lock(&gen_mutex) != 0) {
 		throw std::runtime_error("Failed to lock gen mutex");
 	}
@@ -283,6 +298,7 @@ int GenBridge::equalSign(GenBridge& other) {
 
 GenBridge* GenBridge::left(ContextBridge& context) {
 #ifdef HAVE_LIBPTHREAD
+	static pthread_mutex_t gen_mutex = PTHREAD_MUTEX_INITIALIZER;
 	if (pthread_mutex_lock(&gen_mutex) != 0) {
 		throw std::runtime_error("Failed to lock gen mutex");
 	}
@@ -307,6 +323,7 @@ GenBridge* GenBridge::left(ContextBridge& context) {
 
 GenBridge* GenBridge::right(ContextBridge& context) {
 #ifdef HAVE_LIBPTHREAD
+	static pthread_mutex_t gen_mutex = PTHREAD_MUTEX_INITIALIZER;
 	if (pthread_mutex_lock(&gen_mutex) != 0) {
 		throw std::runtime_error("Failed to lock gen mutex");
 	}
@@ -331,6 +348,7 @@ GenBridge* GenBridge::right(ContextBridge& context) {
 
 GenBridge* GenBridge::canonicalForm(ContextBridge& context) {
 #ifdef HAVE_LIBPTHREAD
+	static pthread_mutex_t gen_mutex = PTHREAD_MUTEX_INITIALIZER;
 	if (pthread_mutex_lock(&gen_mutex) != 0) {
 		throw std::runtime_error("Failed to lock gen mutex");
 	}
@@ -355,6 +373,7 @@ GenBridge* GenBridge::canonicalForm(ContextBridge& context) {
 
 GenBridge* GenBridge::regroup(ContextBridge& context) {
 #ifdef HAVE_LIBPTHREAD
+	static pthread_mutex_t gen_mutex = PTHREAD_MUTEX_INITIALIZER;
 	if (pthread_mutex_lock(&gen_mutex) != 0) {
 		throw std::runtime_error("Failed to lock gen mutex");
 	}
@@ -379,6 +398,7 @@ GenBridge* GenBridge::regroup(ContextBridge& context) {
 
 GenBridge* GenBridge::simplify(ContextBridge& context) {
 #ifdef HAVE_LIBPTHREAD
+	static pthread_mutex_t gen_mutex = PTHREAD_MUTEX_INITIALIZER;
 	if (pthread_mutex_lock(&gen_mutex) != 0) {
 		throw std::runtime_error("Failed to lock gen mutex");
 	}
@@ -403,6 +423,7 @@ GenBridge* GenBridge::simplify(ContextBridge& context) {
 
 GenBridge* GenBridge::operator+(GenBridge& other) {
 #ifdef HAVE_LIBPTHREAD
+	static pthread_mutex_t gen_mutex = PTHREAD_MUTEX_INITIALIZER;
 	if (pthread_mutex_lock(&gen_mutex) != 0) {
 		throw std::runtime_error("Failed to lock gen mutex");
 	}
@@ -426,6 +447,7 @@ GenBridge* GenBridge::operator+(GenBridge& other) {
 
 GenBridge* GenBridge::operator-(GenBridge& other) {
 #ifdef HAVE_LIBPTHREAD
+	static pthread_mutex_t gen_mutex = PTHREAD_MUTEX_INITIALIZER;
 	if (pthread_mutex_lock(&gen_mutex) != 0) {
 		throw std::runtime_error("Failed to lock gen mutex");
 	}
@@ -449,6 +471,7 @@ GenBridge* GenBridge::operator-(GenBridge& other) {
 
 GenBridge* GenBridge::operator*(GenBridge& other) {
 #ifdef HAVE_LIBPTHREAD
+	static pthread_mutex_t gen_mutex = PTHREAD_MUTEX_INITIALIZER;
 	if (pthread_mutex_lock(&gen_mutex) != 0) {
 		throw std::runtime_error("Failed to lock gen mutex");
 	}
@@ -472,6 +495,7 @@ GenBridge* GenBridge::operator*(GenBridge& other) {
 
 GenBridge* GenBridge::operator/(GenBridge& other) {
 #ifdef HAVE_LIBPTHREAD
+	static pthread_mutex_t gen_mutex = PTHREAD_MUTEX_INITIALIZER;
 	if (pthread_mutex_lock(&gen_mutex) != 0) {
 		throw std::runtime_error("Failed to lock gen mutex");
 	}
@@ -495,6 +519,7 @@ GenBridge* GenBridge::operator/(GenBridge& other) {
 
 GenBridge* GenBridge::operator-() {
 #ifdef HAVE_LIBPTHREAD
+	static pthread_mutex_t gen_mutex = PTHREAD_MUTEX_INITIALIZER;
 	if (pthread_mutex_lock(&gen_mutex) != 0) {
 		throw std::runtime_error("Failed to lock gen mutex");
 	}
