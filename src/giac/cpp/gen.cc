@@ -3802,6 +3802,10 @@ namespace giac {
 
   // compute simultaneously real and imaginary part
   void reim(const gen & g,gen & r,gen & i,GIAC_CONTEXT){
+    if (!stack_check(contextptr)){
+      r=i=gensizeerr(gettext("Too many recursion levels"));
+      return;
+    }
     switch (g.type ) {
     case _INT_: case _DOUBLE_: case _FLOAT_: case _ZINT: case _REAL: case _STRNG:
       r=g;
@@ -8854,6 +8858,13 @@ namespace giac {
       return fabs(a._FLOAT_val-b._FLOAT_val)<giac_float(epsilon(contextptr));
     case _IDNT__IDNT:
       // return a.subtype==b.subtype && (a._IDNTptr->name==b._IDNTptr->name || *a._IDNTptr->name==*b._IDNTptr->name);
+      if (a._IDNTptr==b._IDNTptr)
+	return true;
+      if (!a._IDNTptr || !b._IDNTptr)
+	return false;
+      if (!identifier_name_is_plausible(*a._IDNTptr) ||
+	  !identifier_name_is_plausible(*b._IDNTptr))
+	return false;
       return a._IDNTptr->id_name==b._IDNTptr->id_name || strcmp(a._IDNTptr->id_name,b._IDNTptr->id_name)==0;
     case _SYMB__SYMB:
       if (a._SYMBptr==b._SYMBptr)
@@ -12522,6 +12533,8 @@ namespace giac {
   }
   
   static gen aplatir_plus_only(const gen & g){
+    if (!stack_check(context0))
+      return gensizeerr(gettext("Too many recursion levels"));
     if (g.type==_VECT){
       const vecteur & v=*g._VECTptr;
       vecteur w(v);
@@ -12600,7 +12613,10 @@ namespace giac {
         pthread_mutex_unlock(&parse_mutex);
 #endif
 #ifndef NO_STDEXCEPT
-    } catch (std::runtime_error &e) {
+    } catch (std::runtime_error &) {
+      parsed_gen(0,contextptr);
+      parse_result=undef;
+      res=0;
 #ifdef HAVE_LIBPTHREAD
       if (!locked)
         pthread_mutex_unlock(&parse_mutex);
@@ -16813,6 +16829,26 @@ void sprint_double(char * s,double d){
   }
 
   bool stack_check(GIAC_CONTEXT){
+#if defined(__APPLE__) && defined(HAVE_LIBPTHREAD)
+    // The embedding app does not call stack_check_init, and Giac can recurse
+    // on several worker threads. Use the bounds of the current thread rather
+    // than a process-global address captured on a different thread.
+    static __thread size_t stack_bottom = 0;
+    if (!stack_bottom){
+      pthread_t thread = pthread_self();
+      size_t stack_top = (size_t)pthread_get_stackaddr_np(thread);
+      size_t stack_size = pthread_get_stacksize_np(thread);
+      if (stack_top >= stack_size)
+        stack_bottom = stack_top - stack_size;
+    }
+    if (stack_bottom){
+      int frame;
+      size_t current = (size_t)&frame;
+      const size_t reserved_stack = 64 * 1024;
+      if (current < stack_bottom || current - stack_bottom < reserved_stack)
+        return false;
+    }
+#endif
     if (max_stack_size==0) // not initialized, no check
       return true;
     int dummy;

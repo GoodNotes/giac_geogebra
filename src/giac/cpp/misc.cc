@@ -6897,7 +6897,8 @@ static define_unary_function_eval (__os_version,&_os_version,_os_version_s);
       prev=xn;
       multmatvecteur(U,xn,tmp);
       subvecteur(b,tmp,tmp);
-      linsolve_l(L,tmp,xn);
+      if (!linsolve_l(L,tmp,xn))
+        return gendimerr(contextptr);
       gen g=l2norm(xn-prev,contextptr)/bn;
       if (is_greater(eps,g,contextptr))
 	return xn;

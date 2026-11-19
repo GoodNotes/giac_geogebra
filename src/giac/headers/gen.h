@@ -1545,14 +1545,8 @@ namespace giac {
   };
 
 
-  // Returns true if `id_name` looks like a plausible, NUL-terminated identifier
-  // name rather than a dangling/corrupted pointer. Used defensively at every
-  // site that reads identificateur::id_name, since this field has historically
-  // been observed to occasionally contain garbage (EXC_BAD_ACCESS / use of
-  // uninitialized or freed memory) for reasons not yet root-caused.
-  // On failure, also records the bad pointer so the embedding app can surface
-  // it as a diagnosable (non-fatal) event instead of silently limping on.
-  bool identifier_name_is_plausible(const char * id_name);
+  // Reject null or low name pointers, and check the owned name record when
+  // available before reading the name. Failed ownership checks are reported.
 
   // Set (non-atomically; giac itself is single-threaded by contract) the first
   // time identifier_name_is_plausible() rejects a pointer since the flag was
@@ -1612,6 +1606,7 @@ namespace giac {
     inline bool operator !=(const gen & i){ return !(*this==i);}
     void MakeCopyOfNameIfNotLocal(); ///< if the name is not dynamicaly allocated, create a copy for that id.
   };
+  bool identifier_name_is_plausible(const identificateur & identifier);
   struct ref_identificateur {
     volatile ref_count_t ref_count;
     identificateur i;

@@ -1035,7 +1035,8 @@ namespace giac {
 	ptr +=5;
 	short t=0;
 	vector<deg_t>::const_iterator it=lm.begin()+3,itend=lm.end();
-	for (--itend,--it;it!=itend;++ptr,--itend){
+	for (;it!=itend;++ptr){
+	  --itend;
 	  t += *itend;
 	  *ptr=*itend;
 	}
@@ -1058,7 +1059,8 @@ namespace giac {
 	ptr +=9;
 	short t=0;
 	vector<deg_t>::const_iterator it=lm.begin()+7,itend=lm.end();
-	for (--itend,--it;it!=itend;++ptr,--itend){
+	for (;it!=itend;++ptr){
+	  --itend;
 	  t += *itend;
 	  *ptr=*itend;
 	}
@@ -1085,7 +1087,8 @@ namespace giac {
 	ptr += 13;
 	short t=0;
 	vector<deg_t>::const_iterator it=lm.begin()+11,itend=lm.end();
-	for (--itend,--it;it!=itend;++ptr,--itend){
+	for (;it!=itend;++ptr){
+	  --itend;
 	  t += *itend;
 	  *ptr=*itend;
 	}
@@ -1099,8 +1102,8 @@ namespace giac {
 	++ptr;
       }
       if (order.o==_REVLEX_ORDER){
-	for (--itend,--it;it!=itend;++ptr,--itend)
-	  *ptr=*itend;
+	for (;it!=itend;++ptr)
+	  *ptr=*--itend;
       }
       else {
 	for (;it!=itend;++ptr,++it)
@@ -18216,8 +18219,8 @@ void G_idn(vector<unsigned> & G,size_t s){
 	++ptr;
       }
       if (order.o==_REVLEX_ORDER){
-	for (--itend,--it;it!=itend;++ptr,--itend)
-	  *ptr=*itend;
+	for (;it!=itend;++ptr)
+	  *ptr=*--itend;
       }
       else {
 	for (;it!=itend;++ptr,++it)
@@ -18597,8 +18600,8 @@ void G_idn(vector<unsigned> & G,size_t s){
 	++ptr;
       }
       if (order.o==_REVLEX_ORDER){
-	for (--itend,--it;it!=itend;++ptr,--itend)
-	  *ptr=*itend;
+	for (;it!=itend;++ptr)
+	  *ptr=*--itend;
       }
       else {
 	for (;it!=itend;++ptr,++it)
@@ -18980,7 +18983,8 @@ void G_idn(vector<unsigned> & G,size_t s){
 	ptr +=5;
 	short t=0;
 	vector<deg_t>::const_iterator it=lm.begin()+3,itend=lm.end();
-	for (--itend,--it;it!=itend;++ptr,--itend){
+	for (;it!=itend;++ptr){
+	  --itend;
 	  t += *itend;
 	  *ptr=*itend;
 	}
@@ -19002,7 +19006,8 @@ void G_idn(vector<unsigned> & G,size_t s){
 	ptr +=9;
 	short t=0;
 	vector<deg_t>::const_iterator it=lm.begin()+7,itend=lm.end();
-	for (--itend,--it;it!=itend;++ptr,--itend){
+	for (;it!=itend;++ptr){
+	  --itend;
 	  t += *itend;
 	  *ptr=*itend;
 	}
@@ -19028,7 +19033,8 @@ void G_idn(vector<unsigned> & G,size_t s){
 	ptr += 13;
 	short t=0;
 	vector<deg_t>::const_iterator it=lm.begin()+11,itend=lm.end();
-	for (--itend,--it;it!=itend;++ptr,--itend){
+	for (;it!=itend;++ptr){
+	  --itend;
 	  t += *itend;
 	  *ptr=*itend;
 	}
@@ -19045,8 +19051,8 @@ void G_idn(vector<unsigned> & G,size_t s){
 	++ptr;
       }
       if (order.o==_REVLEX_ORDER){
-	for (--itend,--it;it!=itend;++ptr,--itend)
-	  *ptr=*itend;
+	for (;it!=itend;++ptr)
+	  *ptr=*--itend;
       }
       else {
 	for (;it!=itend;++ptr,++it)

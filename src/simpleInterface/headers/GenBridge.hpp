@@ -34,9 +34,8 @@ public:
 	GenBridge* operator/(GenBridge& other);
 	GenBridge* operator-();
 
-	// Polls giac's internal "identifier name looked corrupted" flag (set
-	// defensively whenever giac reads an identificateur::id_name that doesn't
-	// look like a plausible string) and clears it. Returns true if corruption
+	// Polls giac's internal identifier-name corruption flag (set when a name
+	// fails ownership validation) and clears it. Returns true if corruption
 	// was detected since the last call, in which case outLastPointerHex is set
 	// to the rejected pointer value (for diagnostics/telemetry only -- the
 	// underlying memory is not safe to read). Call this after any top-level

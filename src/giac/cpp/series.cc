@@ -2971,6 +2971,10 @@ namespace giac {
 
   // find asymptotic equivalent of e in terms of the mrv var of e
   static bool mrv_lead_term(const gen & e,const identificateur & x,gen & coeff, gen & mrv_var, gen & exponent,sparse_poly1 & q,int begin_ordre,GIAC_CONTEXT,bool series){
+    if (!stack_check(contextptr)){
+      gensizeerr(gettext("Too many recursion levels"));
+      return false;
+    }
     if (!contains(e,x)){
       coeff=ratnormal(e,contextptr);
       mrv_var=x;

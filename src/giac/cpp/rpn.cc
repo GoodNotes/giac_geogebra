@@ -3015,7 +3015,8 @@ namespace giac {
 	      for (int i=0;i<bs;++i){
 		gen Bi=B[i];
 		vecteur v,w;
-		linsolve_l(R,*Bi._VECTptr,v);
+		if (!linsolve_l(R,*Bi._VECTptr,v))
+		  return gendimerr(contextptr);
 		multmatvecteur(qt,v,w);
 		res.push_back(w);
 	      }
@@ -3075,7 +3076,8 @@ namespace giac {
 	    for (int i=0;i<bs;++i){
 	      gen Bi=B[i];
 	      vecteur v;
-	      linsolve_u(R,multmatvecteur(*qt._VECTptr,*Bi._VECTptr),v);
+	      if (!linsolve_u(R,multmatvecteur(*qt._VECTptr,*Bi._VECTptr),v))
+		return gendimerr(contextptr);
 	      res.push_back(v);
 	    }
 	    return mtran(res);

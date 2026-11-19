@@ -281,6 +281,8 @@ namespace giac {
     }
     // copy
     const index_m & operator = (const index_m & other){
+      if (this == &other)
+        return *this;
       --riptr->ref_count;
       if (!riptr->ref_count)
 	delete riptr;
@@ -470,6 +472,8 @@ namespace giac {
     }
     // copy
     const index_m & operator = (const index_m & other){
+      if (this == &other)
+        return *this;
       if ( (taille % 2) == 0){
 	--riptr->ref_count;
 	if (!riptr->ref_count)
