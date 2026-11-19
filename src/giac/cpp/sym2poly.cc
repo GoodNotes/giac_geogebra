@@ -136,7 +136,7 @@ namespace giac {
     {
     identificateur *tmp = e._IDNTptr;
       if (tmp == nullptr) return;
-      if (!identifier_name_is_plausible(tmp->id_name)) return;
+      if (!identifier_name_is_plausible(*tmp)) return;
       if (strcmp(tmp->id_name,string_undef))
 	addtolvar(e,l);}
       return ;
