@@ -454,6 +454,12 @@ namespace giac {
 	if (*ittemp<3 || *ittemp>=it_end-it)
 	  continue;
 	it2=it+(*ittemp); // if dense, point to the last monomial with same x1..xn-1 
+	if (it2->index.riptr == nullptr) {
+#ifdef HAVE_LIBPTHREAD
+	  pthread_mutex_unlock(&index_degree_mutex);
+#endif
+	  return res;
+	}
 	if (it2->index.back()) // last power in xn must be 0
 	  continue;
     if (it->index.riptr == nullptr) {
@@ -463,12 +469,6 @@ namespace giac {
       return res;
     }
 	ittemp= it->index.begin();
-  if (it2->index.riptr == nullptr) {
-#ifdef HAVE_LIBPTHREAD
-    pthread_mutex_unlock(&index_degree_mutex);
-#endif
-    return res;
-  }
 	ittemp2=it2->index.begin();
 	ittempend=ittemp+dim-1; // check all other powers
 	for (;ittemp!=ittempend;++ittemp2,++ittemp){

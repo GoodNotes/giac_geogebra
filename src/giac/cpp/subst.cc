@@ -1514,18 +1514,22 @@ namespace giac {
 
   // Complete a list of prime together factors primeargs such that
   // a is a product of these factors
-  static void decompose(const gen &a_orig,vecteur & primeargs,vecteur & extargs,int begin,const vecteur & vars,GIAC_CONTEXT){
+  static bool decompose(const gen &a_orig,vecteur & primeargs,vecteur & extargs,int begin,const vecteur & vars,GIAC_CONTEXT){
+    if (!stack_check(contextptr)){
+      gensizeerr(gettext("Too many recursion levels"));
+      return false;
+    }
     if (is_unit(a_orig))
-      return;
+      return true;
     if (is_algebraic_extension(a_orig)){
       vecteur coeffs;
       if (!ext_relation(a_orig,extargs,vars,coeffs,contextptr))
 	extargs.push_back(a_orig);
-      return;
+      return true;
     }
     if (primeargs.empty()){
       primeargs.push_back(a_orig);
-      return;
+      return true;
     }
     gen a(a_orig);
     for (int i=begin;i<signed(primeargs.size());){
@@ -1546,10 +1550,12 @@ namespace giac {
 	primeargs[i]=g;
 	continue;
       }
-      decompose(g,primeargs,extargs,i,vars,contextptr);
+      if (!decompose(g,primeargs,extargs,i,vars,contextptr))
+        return false;
     }
     if (!is_unit(a))
       primeargs.push_back(a);
+    return true;
   }
 
   static gen branch_evalf(const gen & g,GIAC_CONTEXT){
@@ -1999,8 +2005,9 @@ namespace giac {
       for (int i=0;i<s;++i){
 	// check for common factors between argln[i] and primeargs
 	fxnd(argln[i],num,den);
-	decompose(num,primeargs,extargs,0,vars,contextptr);
-	decompose(den,primeargs,extargs,0,vars,contextptr);
+	if (!decompose(num,primeargs,extargs,0,vars,contextptr) ||
+	    !decompose(den,primeargs,extargs,0,vars,contextptr))
+	  return gensizeerr(gettext("Too many recursion levels"));
       }
       // now rewrite ln[argln[i]] as a sum of ln[primeargs[]]
       // int p=primeargs.size();
@@ -2394,6 +2401,8 @@ namespace giac {
   }
 
   gen simplify(const gen & e_orig,GIAC_CONTEXT){
+    if (!stack_check(contextptr))
+      return gensizeerr(gettext("Too many recursion levels"));
     if (e_orig.type<=_POLY || is_inf(e_orig) || has_num_coeff(e_orig))
       return e_orig;
     if (maybe_set(e_orig))

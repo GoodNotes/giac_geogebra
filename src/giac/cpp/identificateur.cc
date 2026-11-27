@@ -72,37 +72,24 @@ namespace giac {
   volatile bool giac_identifier_corruption_detected = false;
   const void * giac_identifier_corruption_last_pointer = nullptr;
 
-  bool identifier_name_is_plausible(const char * id_name){
-    // A real identifier name is always a short, NUL-terminated, printable
-    // C string (or nullptr for a never-named identifier, treated separately
-    // by callers). Anything else -- including an address low enough to be a
-    // null-page/small-integer artifact, or a pointer whose bytes don't look
-    // like a short printable string -- is treated as corruption rather than
-    // risking undefined behaviour (e.g. strcmp running off into unmapped or
-    // unrelated memory).
-    if (!id_name) return false;
-    if ((uintptr_t)id_name < 0x1000) {
+  bool identifier_name_is_plausible(const identificateur & identifier){
+    const char * id_name = identifier.id_name;
+    if (!id_name)
+      return false;
+    bool plausible = (uintptr_t)id_name >= 0x1000;
+    if (plausible && identifier.ref_count_ptr){
+      // Check the owned name and the ref-count record before reading any
+      // character. The previous guard dereferenced a suspect pointer while
+      // trying to validate it, making the guard itself a common crash site.
+      const int_string_shortint_bool * ptr =
+	(const int_string_shortint_bool *)identifier.ref_count_ptr;
+      plausible = identifier.quoted == &ptr->b && id_name == ptr->s;
+    }
+    if (!plausible){
       giac_identifier_corruption_detected = true;
       giac_identifier_corruption_last_pointer = id_name;
-      return false;
     }
-    const size_t maxLen = 256; // real identifier names are always far shorter
-    size_t len = 0;
-    for (; len < maxLen; ++len){
-      unsigned char c = (unsigned char) id_name[len];
-      if (c == 0) break;
-      if (c < 32 || c >= 127){
-	giac_identifier_corruption_detected = true;
-	giac_identifier_corruption_last_pointer = id_name;
-	return false;
-      }
-    }
-    if (len == 0 || len == maxLen){
-      giac_identifier_corruption_detected = true;
-      giac_identifier_corruption_last_pointer = id_name;
-      return false;
-    }
-    return true;
+    return plausible;
   }
 
 #ifdef DOUBLEVAL // #ifdef GIAC_GENERIC_CONSTANTS
@@ -821,11 +808,16 @@ namespace giac {
   void identificateur::MakeCopyOfNameIfNotLocal() {
     int_string_shortint_bool * ptr = (int_string_shortint_bool *) ref_count_ptr;
     if (ptr->s_dynalloc) return;
-    id_name = ptr->s= strdup(ptr->s);
+    size_t len = strlen(ptr->s);
+    char * name_copy = new char[len+1];
+    memcpy(name_copy, ptr->s, len+1);
+    id_name = ptr->s = name_copy;
     ptr->s_dynalloc= true;
   }
 
   identificateur & identificateur::operator =(const identificateur & s){
+    if (this == &s)
+      return *this;
     if (ref_count_ptr){
       --(*ref_count_ptr);
       if (!(*ref_count_ptr)){
@@ -1239,7 +1231,7 @@ namespace giac {
   }
 
   const char * identificateur::print(GIAC_CONTEXT) const{
-    if (!identifier_name_is_plausible(id_name)) return "";
+    if (!identifier_name_is_plausible(*this)) return "";
     if (!strcmp(id_name,string_pi)){
 #if defined NUMWORKS || defined HP39
       return string_pi;

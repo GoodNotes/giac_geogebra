@@ -1549,6 +1549,8 @@ namespace giac {
   }
 
   gen _program(const gen & args,const gen & name,const context * contextptr){
+    if (!stack_check(contextptr))
+      return gensizeerr(gettext("Too many recursion levels"));
     if ( args.type==_STRNG &&  args.subtype==-1) return  args;
     if (args.type!=_VECT)
       return args.eval(prog_eval_level(contextptr),contextptr);

@@ -519,6 +519,8 @@ namespace giac {
   }
 
   gen derive(const gen & e,const identificateur & i,GIAC_CONTEXT){
+    if (!stack_check(contextptr))
+      return gensizeerr(gettext("Too many recursion levels"));
     if (is_undef(e) || is_inequation(e))
       return undef;
     if (abs_calc_mode(contextptr)==38 && i.id_name[0]>='A' && i.id_name[0]<='Z'){
